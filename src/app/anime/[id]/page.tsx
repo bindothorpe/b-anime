@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
 
 interface AnimeInfo {
   id: string;
@@ -35,6 +36,8 @@ export default function AnimePage() {
 
   const [animeInfo, setAnimeInfo] = useState<AnimeInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const router = useRouter();
 
   useEffect(() => {
     const fetchAnimeInfo = async () => {
@@ -117,8 +120,9 @@ export default function AnimePage() {
                       variant="outline"
                       className="w-full"
                       onClick={() => {
-                        // Handle episode selection
-                        console.log("Selected episode:", episode);
+                        router.push(
+                          `/watch/${episode.id}?anime=${id}&episode=${episode.number}`
+                        );
                       }}
                     >
                       {episode.number}
