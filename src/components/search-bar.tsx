@@ -2,54 +2,26 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-interface AnimeResult {
-  id: string;
-  title: string;
-  url: string;
-  image: string;
-  releaseDate: string;
-  subOrDub: string;
-}
-
-interface SearchResponse {
-  currentPage: number;
-  hasNextPage: boolean;
-  results: AnimeResult[];
-}
-
-interface SearchBarProps {
-  onSearch: (results: AnimeResult[]) => void;
-  onLoadingChange: (isLoading: boolean) => void;
-  isLoading?: boolean;
-}
-
-export function SearchBar({
-  onSearch,
-  onLoadingChange,
-  isLoading = false,
-}: SearchBarProps) {
+export function SearchBar() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
+  // components/search-bar.tsx
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    onLoadingChange(true);
-    try {
-      const response = await fetch(
-        `/api/anime/${encodeURIComponent(searchQuery)}`
-      );
-      const data: SearchResponse = await response.json();
-      onSearch(data.results);
-    } catch (error) {
-      console.error("Search error:", error);
-    } finally {
-      onLoadingChange(false);
-    }
+    // Replace any sequence of spaces with a single space, then trim
+    const cleanedQuery = searchQuery.replace(/\s+/g, " ").trim();
+    // Use encodeURIComponent for proper URL encoding
+    router.push(`/search/${encodeURIComponent(cleanedQuery)}`);
+    setSearchQuery("");
   };
 
   return (

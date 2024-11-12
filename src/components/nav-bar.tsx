@@ -1,3 +1,4 @@
+// components/nav-bar.tsx
 "use client";
 
 import Link from "next/link";
@@ -12,22 +13,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-interface AnimeResult {
-  id: string;
-  title: string;
-  url: string;
-  image: string;
-  releaseDate: string;
-  subOrDub: string;
-}
-
-interface NavBarProps {
-  onSearch: (results: AnimeResult[]) => void;
-  onLoadingChange: (isLoading: boolean) => void;
-  isLoading?: boolean;
-}
-
-export function NavBar({ onSearch, onLoadingChange, isLoading }: NavBarProps) {
+export function NavBar() {
   return (
     <nav className="border-b bg-background">
       <div className="flex h-16 items-center px-4 sm:px-6">
@@ -89,11 +75,7 @@ export function NavBar({ onSearch, onLoadingChange, isLoading }: NavBarProps) {
         {/* Search Bar */}
         <div className="flex-1 flex justify-end px-4 max-w-3xl ml-auto">
           <div className="w-full max-w-[500px]">
-            <SearchBar
-              onSearch={onSearch}
-              onLoadingChange={onLoadingChange}
-              isLoading={isLoading}
-            />
+            <SearchBar />
           </div>
         </div>
       </div>

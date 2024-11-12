@@ -1,8 +1,7 @@
 // app/layout.tsx
 import "./globals.css";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
 import { Providers } from "@/components/providers";
+import { NavBar } from "@/components/nav-bar";
 
 export default function RootLayout({
   children,
@@ -12,15 +11,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        {/* <SidebarProvider> */}
         <Providers>
-          {/* <AppSidebar /> */}
-          <main>
-            {/* <SidebarTrigger /> */}
-            {children}
-          </main>
+          <NavBar />
+          <main>{children}</main>
         </Providers>
-        {/* </SidebarProvider> */}
       </body>
     </html>
   );
