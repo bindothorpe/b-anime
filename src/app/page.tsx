@@ -1,4 +1,5 @@
 "use client";
+import { RecentEpisodesGrid } from "@/components/recent-episodes-grid";
 import { useEffect, useState } from "react";
 
 interface EpisodeResult {
@@ -40,5 +41,10 @@ export default function Home() {
     fetchResults();
   }, []);
 
-  return <div className="container mx-auto py-8"></div>;
+  return (
+    <div className="container mx-auto py-6">
+      <h1 className="text-2xl font-bold mb-6 pl-4">Recent Episodes</h1>
+      <RecentEpisodesGrid results={results} isLoading={isLoading} />
+    </div>
+  );
 }
