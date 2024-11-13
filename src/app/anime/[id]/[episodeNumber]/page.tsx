@@ -7,6 +7,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Hls from "hls.js";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import Link from "next/link";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 
 interface EpisodeSource {
   headers: { [key: string]: string };
@@ -17,6 +33,35 @@ interface EpisodeSource {
   }>;
   download: string;
 }
+
+// We also get the anime info to be able to keep track of the episode count
+interface AnimeInfo {
+  id: string;
+  title: string;
+  url: string;
+  image: string;
+  releaseDate: string;
+  description: string;
+  genres: string[];
+  subOrDub: string;
+  type: string;
+  status: string;
+  otherName: string;
+  totalEpisodes: number;
+  episodes: Array<{
+    id: string;
+    number: number;
+    url: string;
+  }>;
+}
+
+const canGoToNextEpisode = (currentEpisode: number, totalEpisodes: number) => {
+  return currentEpisode < totalEpisodes;
+};
+
+const canGoToPreviousEpisode = (currentEpisode: number) => {
+  return currentEpisode > 1;
+};
 
 export default function WatchPage() {
   const params = useParams();
@@ -30,6 +75,7 @@ export default function WatchPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [source, setSource] = useState<EpisodeSource | null>(null);
+  const [animeInfo, setAnimeInfo] = useState<AnimeInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentQuality, setCurrentQuality] = useState<string>("1080p");
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +87,11 @@ export default function WatchPage() {
         if (!response.ok) throw new Error("Failed to fetch episode data");
         const data = await response.json();
         setSource(data);
+
+        const animeResponse = await fetch(`/api/anime/info/${animeId}`);
+        if (!animeResponse.ok) throw new Error("Failed to fetch anime data");
+        const animeData = await animeResponse.json();
+        setAnimeInfo(animeData);
       } catch (error) {
         console.error("Error:", error);
         setError(
@@ -198,6 +249,10 @@ export default function WatchPage() {
     };
   }, [source, currentQuality]);
 
+  const navigateToEpisode = (episode: number) => {
+    router.push(`/anime/${animeId}/${episode}`);
+  };
+
   if (isLoading) {
     return <WatchSkeleton />;
   }
@@ -224,15 +279,39 @@ export default function WatchPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
-            <span>Episode {episodeNumber}</span>
-            {animeId && (
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/anime/${animeId}`)}
-              >
-                Back to Anime
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href={`/anime/${animeId}`}>
+                      {animeInfo?.title}
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <BreadcrumbPage>Episode {episodeNumber}</BreadcrumbPage>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-fit">
+                        <ScrollArea className="h-72 w-28 bg-background">
+                          {animeInfo?.episodes.map((episode) => (
+                            <Link
+                              key={episode.id}
+                              href={`/anime/${animeId}/${episode.number}`}
+                            >
+                              <Button variant="link" className="w-full">
+                                Episode {episode.number}
+                              </Button>
+                            </Link>
+                          ))}
+                        </ScrollArea>
+                      </PopoverContent>
+                    </Popover>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -245,35 +324,33 @@ export default function WatchPage() {
             />
           </div>
 
-          <div className="mt-4 flex gap-2">
-            {source?.sources
-              .filter((s) => s.quality !== "backup" && s.quality !== "default")
-              .sort((a, b) => {
-                const qualityA = parseInt(a.quality);
-                const qualityB = parseInt(b.quality);
-                return qualityB - qualityA;
-              })
-              .map((s) => (
-                <Button
-                  key={s.quality}
-                  variant={currentQuality === s.quality ? "default" : "outline"}
-                  onClick={() => setCurrentQuality(s.quality)}
-                >
-                  {s.quality}
-                </Button>
-              ))}
-          </div>
-
-          {source?.download && (
-            <div className="mt-4">
+          <div className="mt-4 flex flex-col gap-4">
+            <div className="flex justify-between">
               <Button
-                className="w-full"
-                onClick={() => window.open(source.download, "_blank")}
+                className="flex items-center gap-2"
+                variant="outline"
+                disabled={!canGoToPreviousEpisode(Number(episodeNumber))}
+                onClick={() => navigateToEpisode(Number(episodeNumber) - 1)}
               >
-                Download Episode
+                <ChevronLeft className="w-6 h-6" />
+                Previous Episode
+              </Button>
+              <Button
+                className="flex items-center gap-2"
+                variant="outline"
+                disabled={
+                  !canGoToNextEpisode(
+                    Number(episodeNumber),
+                    animeInfo?.totalEpisodes ?? 0
+                  )
+                }
+                onClick={() => navigateToEpisode(Number(episodeNumber) + 1)}
+              >
+                Next Episode
+                <ChevronRight className="w-6 h-6" />
               </Button>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -285,15 +362,19 @@ function WatchSkeleton() {
     <div className="container mx-auto py-8">
       <Card>
         <CardHeader>
-          <Skeleton className="h-8 w-[200px]" />
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-40" />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Skeleton className="aspect-video w-full" />
-          <div className="mt-4 flex gap-2">
-            <Skeleton className="h-10 w-16" />
-            <Skeleton className="h-10 w-16" />
-            <Skeleton className="h-10 w-16" />
-            <Skeleton className="h-10 w-16" />
+          <div className="mt-4 flex flex-col gap-4">
+            <div className="flex justify-between">
+              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-10 w-32" />
+            </div>
           </div>
         </CardContent>
       </Card>
