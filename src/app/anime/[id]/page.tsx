@@ -120,9 +120,7 @@ export default function AnimePage() {
                       variant="outline"
                       className="w-full"
                       onClick={() => {
-                        router.push(
-                          `/watch/${episode.id}?anime=${id}&episode=${episode.number}`
-                        );
+                        router.push(`/anime/${id}/${episode.number}`);
                       }}
                     >
                       {episode.number}

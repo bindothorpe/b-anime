@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,10 +21,11 @@ interface EpisodeSource {
 export default function WatchPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const episodeId = params.episodeId as string;
-  const animeId = searchParams.get("anime");
-  const episodeNumber = searchParams.get("episode");
+
+  const animeId = params.id as string;
+  const episodeNumber = params.episodeNumber as string;
+
+  const episodeId = `${animeId}-episode-${episodeNumber}`;
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
