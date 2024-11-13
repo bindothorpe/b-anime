@@ -1,5 +1,5 @@
 "use client";
-import { RecentEpisodesGrid } from "@/components/recent-episodes-grid";
+import { RecentEpisodesGrid } from "@/components/recent-episode/recent-episodes-grid";
 import { useEffect, useState } from "react";
 
 interface EpisodeResult {

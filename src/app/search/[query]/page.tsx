@@ -3,7 +3,7 @@
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AnimeGrid } from "@/components/anime-grid";
+import { AnimeGrid } from "@/components/anime/anime-grid";
 import {
   Pagination,
   PaginationContent,
