@@ -1,8 +1,7 @@
 // components/recent-episode-card.tsx
 import Image from "next/image";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface RecentEpisodeCardProps {
   id: string;

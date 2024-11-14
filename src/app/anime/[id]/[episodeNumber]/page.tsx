@@ -34,6 +34,8 @@ interface EpisodeSource {
   download: string;
 }
 
+const currentQuality = "1080p";
+
 // We also get the anime info to be able to keep track of the episode count
 interface AnimeInfo {
   id: string;
@@ -77,7 +79,6 @@ export default function WatchPage() {
   const [source, setSource] = useState<EpisodeSource | null>(null);
   const [animeInfo, setAnimeInfo] = useState<AnimeInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentQuality, setCurrentQuality] = useState<string>("1080p");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -103,7 +104,7 @@ export default function WatchPage() {
     };
 
     fetchEpisode();
-  }, [episodeId]);
+  }, [episodeId, animeId]);
 
   useEffect(() => {
     if (!source || !videoRef.current) return;
@@ -247,7 +248,7 @@ export default function WatchPage() {
         hlsRef.current = null;
       }
     };
-  }, [source, currentQuality]);
+  }, [source]);
 
   const navigateToEpisode = (episode: number) => {
     router.push(`/anime/${animeId}/${episode}`);

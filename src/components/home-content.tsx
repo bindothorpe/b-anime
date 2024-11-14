@@ -1,9 +1,8 @@
-// app/search/[query]/page.tsx
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { RecentEpisodesGrid } from "@/components/recent-episode/recent-episodes-grid";
 import { useEffect, useState } from "react";
-import { AnimeGrid } from "@/components/anime/anime-grid";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Pagination,
   PaginationContent,
@@ -13,30 +12,27 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-interface AnimeResult {
+interface EpisodeResult {
   id: string;
+  episodeId: string;
+  episodeNumber: number;
   title: string;
-  url: string;
   image: string;
-  releaseDate: string;
-  subOrDub: string;
+  url: string;
 }
 
-interface SearchResponse {
+interface RecentEpisodeResponse {
   currentPage: number;
   hasNextPage: boolean;
-  results: AnimeResult[];
+  results: EpisodeResult[];
 }
 
-export default function SearchPage() {
-  const params = useParams();
+export default function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-
-  const query = params.query as string;
   const currentPage = Number(searchParams.get("page")) || 1;
 
-  const [results, setResults] = useState<AnimeResult[]>([]);
+  const [results, setResults] = useState<EpisodeResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasNextPage, setHasNextPage] = useState(false);
 
@@ -44,10 +40,8 @@ export default function SearchPage() {
     const fetchResults = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(
-          `/api/anime/${encodeURIComponent(query)}?page=${currentPage}`
-        );
-        const data: SearchResponse = await response.json();
+        const response = await fetch(`/api/anime/recent?page=${currentPage}`);
+        const data: RecentEpisodeResponse = await response.json();
         setResults(data.results);
         setHasNextPage(data.hasNextPage);
       } catch (error) {
@@ -58,10 +52,10 @@ export default function SearchPage() {
     };
 
     fetchResults();
-  }, [query, currentPage]);
+  }, [currentPage]);
 
   const handlePageChange = (page: number) => {
-    router.push(`/search/${query}?page=${page}`);
+    router.push(`/?page=${page}`);
   };
 
   // Generate array of page numbers for pagination
@@ -79,10 +73,8 @@ export default function SearchPage() {
 
   return (
     <div className="container mx-auto py-6">
-      <h1 className="text-2xl font-bold mb-6 pl-4">
-        Search Results for &ldquo;{query.replaceAll("%20", " ")}&ldquo;
-      </h1>
-      <AnimeGrid results={results} isLoading={isLoading} />
+      <h1 className="text-2xl font-bold mb-6 pl-4">Recent Episodes</h1>
+      <RecentEpisodesGrid results={results} isLoading={isLoading} />
 
       {/* Pagination */}
       {!isLoading && results.length > 0 && (
@@ -138,7 +130,7 @@ export default function SearchPage() {
       {/* No results message */}
       {!isLoading && results.length === 0 && (
         <div className="text-center text-muted-foreground mt-8">
-          No results found for &ldquo;{query}&ldquo;
+          No recent episodes found
         </div>
       )}
     </div>

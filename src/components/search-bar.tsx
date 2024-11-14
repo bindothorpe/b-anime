@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 
 export function SearchBar() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   // components/search-bar.tsx
@@ -32,24 +31,14 @@ export function SearchBar() {
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         className="flex-1"
-        disabled={isLoading}
       />
       {/* Desktop Search Button */}
-      <Button
-        type="submit"
-        disabled={isLoading}
-        className="hidden sm:flex items-center gap-2"
-      >
+      <Button type="submit" className="hidden sm:flex items-center gap-2">
         <Search className="h-4 w-4" />
-        <span>{isLoading ? "Searching..." : "Search"}</span>
+        <span>Search</span>
       </Button>
       {/* Mobile Search Button (icon only) */}
-      <Button
-        type="submit"
-        disabled={isLoading}
-        size="icon"
-        className="sm:hidden"
-      >
+      <Button type="submit" size="icon" className="sm:hidden">
         <Search className="h-4 w-4" />
       </Button>
     </form>

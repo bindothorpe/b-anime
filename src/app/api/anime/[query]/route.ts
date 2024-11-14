@@ -3,11 +3,12 @@ import { ANIME } from '@consumet/extensions';
 
 export async function GET(
   request: Request,
-  { params }: { params: { query: string } }
+  { params }: { params: Promise<{ query: string }> }
 ) {
   const { searchParams } = new URL(request.url);
+  const query = (await params).query
   const page = Number(searchParams.get('page')) || 1;
-  const decodedQuery = decodeURIComponent(params.query);
+  const decodedQuery = decodeURIComponent(query);
   
   const gogoanime = new ANIME.Gogoanime();
   
