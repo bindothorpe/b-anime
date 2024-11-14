@@ -6,7 +6,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import Hls from "hls.js";
+import Hls, { ErrorTypes, ErrorDetails, Events } from "hls.js";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -24,6 +24,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 
+interface HlsError {
+  type: ErrorTypes;
+  fatal: boolean;
+  details: ErrorDetails;
+}
+
 interface EpisodeSource {
   headers: { [key: string]: string };
   sources: Array<{
@@ -33,8 +39,6 @@ interface EpisodeSource {
   }>;
   download: string;
 }
-
-const currentQuality = "1080p";
 
 // We also get the anime info to be able to keep track of the episode count
 interface AnimeInfo {
@@ -116,13 +120,13 @@ export default function WatchPage() {
             levelLoadingTimeOut: 20000,
           });
 
-          const onError = (_: any, data: any) => {
+          const onError = (_event: Events.ERROR, data: HlsError) => {
             if (data.fatal) {
               switch (data.type) {
-                case Hls.ErrorTypes.NETWORK_ERROR:
+                case ErrorTypes.NETWORK_ERROR:
                   hls.startLoad();
                   break;
-                case Hls.ErrorTypes.MEDIA_ERROR:
+                case ErrorTypes.MEDIA_ERROR:
                   hls.recoverMediaError();
                   break;
                 default:
@@ -137,16 +141,16 @@ export default function WatchPage() {
             videoElement.play().catch(console.error);
           };
 
-          hls.on(Hls.Events.ERROR, onError);
-          hls.on(Hls.Events.MANIFEST_PARSED, onManifestParsed);
+          hls.on(Events.ERROR, onError);
+          hls.on(Events.MANIFEST_PARSED, onManifestParsed);
 
           hls.loadSource(manifestUrl);
           hls.attachMedia(videoElement);
           hlsRef.current = hls;
 
           return () => {
-            hls.off(Hls.Events.ERROR, onError);
-            hls.off(Hls.Events.MANIFEST_PARSED, onManifestParsed);
+            hls.off(Events.ERROR, onError);
+            hls.off(Events.MANIFEST_PARSED, onManifestParsed);
           };
         } else if (videoElement.canPlayType("application/vnd.apple.mpegurl")) {
           videoElement.src = manifestUrl;

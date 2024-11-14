@@ -4,11 +4,11 @@ import { StreamingServers } from '@consumet/extensions/dist/models';
 
 export async function GET(
   request: Request,
-  { params }: { params: { episodeId: string } }
+  { params }: { params: Promise<{ episodeId: string }> }
 ) {
   try {
     // Extract the episode ID from the path
-    const episodeId = params.episodeId;
+    const episodeId = (await params).episodeId;
     
     // Parse server from query params (optional)
     const { searchParams } = new URL(request.url);
