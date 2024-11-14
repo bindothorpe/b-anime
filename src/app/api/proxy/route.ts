@@ -1,4 +1,6 @@
-export async function GET(request: Request) {
+import { NextRequest } from 'next/server';
+
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const urlParam = searchParams.get('url');
   const type = searchParams.get('type');
@@ -10,13 +12,22 @@ export async function GET(request: Request) {
   try {
     let decodedUrl = decodeURIComponent(urlParam);
     
-    // Handle already proxied URLs using the current domain
+    // Handle relative paths for .ts files
+    if (decodedUrl.startsWith('ep.')) {
+      // Extract the base URL from the Referer header
+      const referer = request.headers.get('referer') || '';
+      const refererUrl = new URL(referer);
+      const pathParts = refererUrl.pathname.split('/');
+      // Remove the last part of the path (filename)
+      pathParts.pop();
+      const basePath = pathParts.join('/');
+      // Construct the full URL
+      decodedUrl = `${refererUrl.origin}${basePath}/${decodedUrl}`;
+    }
+    
+    // Handle already proxied URLs
     if (decodedUrl.startsWith('/api/proxy')) {
-      // Get the current domain from the request
-      const currentDomain = request.headers.get('host') || '';
-      const protocol = request.headers.get('x-forwarded-proto') || 'http';
-      const baseUrl = `${protocol}://${currentDomain}`;
-      
+      const baseUrl = new URL(request.url).origin;
       const proxyUrl = new URL(decodedUrl, baseUrl);
       decodedUrl = decodeURIComponent(proxyUrl.searchParams.get('url') || '');
     }
@@ -39,7 +50,6 @@ export async function GET(request: Request) {
 
     const headers = new Headers();
     response.headers.forEach((value, key) => {
-      // Skip problematic headers
       if (!['content-encoding', 'content-length'].includes(key.toLowerCase())) {
         headers.set(key, value);
       }
@@ -56,19 +66,14 @@ export async function GET(request: Request) {
       const baseUrl = new URL(decodedUrl);
       const basePath = baseUrl.href.substring(0, baseUrl.href.lastIndexOf('/') + 1);
 
-      // Get the current domain for the proxy URL
-      const currentDomain = request.headers.get('host') || '';
-      const protocol = request.headers.get('x-forwarded-proto') || 'http';
-      const baseProxyUrl = `${protocol}://${currentDomain}`;
-
-      // Process the m3u8 content with the current domain
+      // Process the m3u8 content
       const modifiedText = text.replace(
         /^(?!#)(.+\.ts)$/gm,
         (match) => {
-          const absoluteUrl = match.startsWith('http') 
+          const tsUrl = match.startsWith('http') 
             ? match 
             : new URL(match, basePath).href;
-          return `${baseProxyUrl}/api/proxy?url=${encodeURIComponent(absoluteUrl)}&type=ts`;
+          return `/api/proxy?url=${encodeURIComponent(tsUrl)}&type=ts`;
         }
       );
 
@@ -79,6 +84,7 @@ export async function GET(request: Request) {
 
     // Handle ts files
     if (type === 'ts') {
+      headers.set('Content-Type', 'video/mp2t');
       headers.set('Cache-Control', 'public, max-age=31536000');
     }
 
@@ -86,7 +92,10 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Proxy error:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to proxy request' }), 
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Failed to proxy request',
+        url: decodeURIComponent(urlParam || ''),
+      }), 
       { 
         status: 500,
         headers: {
@@ -96,4 +105,14 @@ export async function GET(request: Request) {
       }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': '*',
+    },
+  });
 }

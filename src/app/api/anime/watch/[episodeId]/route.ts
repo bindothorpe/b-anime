@@ -4,22 +4,43 @@ import { StreamingServers } from '@consumet/extensions/dist/models';
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ episodeId: string }> }
+  { params }: { params: { episodeId: string } }
 ) {
-  const episodeId = (await params).episodeId;
-  const { searchParams } = new URL(request.url);
-  const server = searchParams.get('server') as StreamingServers || StreamingServers.GogoCDN;
-  
-  const gogoanime = new ANIME.Gogoanime();
-  
   try {
-    const data = await gogoanime.fetchEpisodeSources(episodeId, server);
+    // Extract the episode ID from the path
+    const episodeId = params.episodeId;
+    
+    // Parse server from query params (optional)
+    const { searchParams } = new URL(request.url);
+    const server = searchParams.get('server') as StreamingServers || StreamingServers.GogoCDN;
 
-    // Modify the sources to use our proxy
+    console.log('Fetching episode:', episodeId, 'from server:', server); // Debug log
+
+    const gogoanime = new ANIME.Gogoanime();
+    
+    // The episodeId needs to be formatted properly for the API
+    // Format: anime-name-episode-number
+    // Example: one-piece-episode-1000
+    
+    // Remove any additional path segments and clean the ID
+    const cleanEpisodeId = episodeId
+      .split('/').pop() // Get last segment
+      ?.replace(/^\/+|\/+$/g, ''); // Remove leading/trailing slashes
+    
+    if (!cleanEpisodeId) {
+      throw new Error('Invalid episode ID format');
+    }
+
+    console.log('Cleaned episode ID:', cleanEpisodeId); // Debug log
+
+    const data = await gogoanime.fetchEpisodeSources(cleanEpisodeId, server);
+
+    // Map sources to include proxy
     const sources = data.sources.map(source => ({
       ...source,
-      // Proxy the m3u8 URLs through our API
-      url: `/api/proxy?url=${encodeURIComponent(source.url)}`
+      url: source.url.startsWith('http') 
+        ? `/api/proxy?url=${encodeURIComponent(source.url)}&type=m3u8`
+        : source.url
     }));
 
     return Response.json({
@@ -28,9 +49,9 @@ export async function GET(
       download: data.download
     });
   } catch (error) {
-    console.error('Error fetching episode:', error);
+    console.error('Error in watch route:', error);
     return Response.json(
-      { error: 'Failed to fetch episode' },
+      { error: error instanceof Error ? error.message : 'Failed to fetch episode' },
       { status: 500 }
     );
   }

@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -71,8 +71,14 @@ export default function WatchPage() {
 
   const animeId = params.id as string;
   const episodeNumber = params.episodeNumber as string;
-
-  const episodeId = `${animeId}-episode-${episodeNumber}`;
+  const episodeId =
+    decodeURIComponent(animeId)
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "") +
+    "-episode-" +
+    episodeNumber;
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -80,175 +86,145 @@ export default function WatchPage() {
   const [animeInfo, setAnimeInfo] = useState<AnimeInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const initializingRef = useRef(false);
 
-  useEffect(() => {
-    const fetchEpisode = async () => {
+  // Separate cleanup function
+  const cleanupHls = useCallback(() => {
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.src = "";
+      videoRef.current.load();
+    }
+  }, []);
+
+  // Separate HLS initialization function
+  const initializeHls = useCallback(
+    (videoElement: HTMLVideoElement, manifestUrl: string) => {
+      if (initializingRef.current) return;
+      initializingRef.current = true;
+
       try {
-        const response = await fetch(`/api/anime/watch/${episodeId}`);
-        if (!response.ok) throw new Error("Failed to fetch episode data");
-        const data = await response.json();
-        setSource(data);
+        if (Hls.isSupported()) {
+          const hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            fragLoadingTimeOut: 20000,
+            manifestLoadingTimeOut: 20000,
+            levelLoadingTimeOut: 20000,
+          });
 
-        const animeResponse = await fetch(`/api/anime/info/${animeId}`);
-        if (!animeResponse.ok) throw new Error("Failed to fetch anime data");
+          const onError = (_: any, data: any) => {
+            if (data.fatal) {
+              switch (data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                  hls.startLoad();
+                  break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                  hls.recoverMediaError();
+                  break;
+                default:
+                  cleanupHls();
+                  setError("Fatal playback error");
+                  break;
+              }
+            }
+          };
+
+          const onManifestParsed = () => {
+            videoElement.play().catch(console.error);
+          };
+
+          hls.on(Hls.Events.ERROR, onError);
+          hls.on(Hls.Events.MANIFEST_PARSED, onManifestParsed);
+
+          hls.loadSource(manifestUrl);
+          hls.attachMedia(videoElement);
+          hlsRef.current = hls;
+
+          return () => {
+            hls.off(Hls.Events.ERROR, onError);
+            hls.off(Hls.Events.MANIFEST_PARSED, onManifestParsed);
+          };
+        } else if (videoElement.canPlayType("application/vnd.apple.mpegurl")) {
+          videoElement.src = manifestUrl;
+          videoElement.addEventListener("loadedmetadata", () => {
+            videoElement.play().catch(console.error);
+          });
+        } else {
+          setError("HLS playback is not supported in this browser.");
+        }
+      } catch (error) {
+        console.error("HLS initialization error:", error);
+        setError("Failed to initialize video player");
+      } finally {
+        initializingRef.current = false;
+      }
+    },
+    [cleanupHls]
+  );
+
+  // Data fetching effect
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const [episodeResponse, animeResponse] = await Promise.all([
+          fetch(`/api/anime/watch/${episodeId}`),
+          fetch(`/api/anime/info/${animeId}`),
+        ]);
+
+        if (!episodeResponse.ok || !animeResponse.ok) {
+          throw new Error("Failed to fetch data");
+        }
+
+        const episodeData = await episodeResponse.json();
         const animeData = await animeResponse.json();
+
+        setSource(episodeData);
         setAnimeInfo(animeData);
       } catch (error) {
         console.error("Error:", error);
         setError(
-          error instanceof Error ? error.message : "Failed to load episode"
+          error instanceof Error ? error.message : "Failed to load data"
         );
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchEpisode();
+    fetchData();
   }, [episodeId, animeId]);
 
+  // HLS initialization effect
   useEffect(() => {
     if (!source || !videoRef.current) return;
 
-    // Clean up previous HLS instance
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
-    }
+    cleanupHls();
 
     const selectedSource =
-      source.sources.find((s) => s.quality === currentQuality) ||
-      source.sources[0]; // Fallback to first source if quality not found
-
+      source.sources.find((s) => s.quality === "1080p") || source.sources[0];
     if (!selectedSource) {
       setError("No valid video source found");
       return;
     }
 
-    const initializeHLS = (
-      videoElement: HTMLVideoElement,
-      manifestUrl: string
-    ) => {
-      if (Hls.isSupported()) {
-        const hls = new Hls({
-          debug: true,
-          enableWorker: true,
-          lowLatencyMode: false,
-          backBufferLength: 90,
-          maxBufferSize: 0,
-          maxBufferLength: 30,
-          maxMaxBufferLength: 600,
-          startLevel: -1,
-          manifestLoadingMaxRetry: 2,
-          levelLoadingMaxRetry: 2,
-          fragLoadingMaxRetry: 2,
-          manifestLoadingRetryDelay: 1000,
-          levelLoadingRetryDelay: 1000,
-          fragLoadingRetryDelay: 1000,
-          manifestLoadingTimeOut: 10000,
-          levelLoadingTimeOut: 10000,
-          fragLoadingTimeOut: 20000,
-          // Improve streaming performance
-          testBandwidth: true,
-          progressive: true,
-          autoStartLoad: true,
-          startFragPrefetch: true,
-          loader: Hls.DefaultConfig.loader,
-          xhrSetup: (xhr, url) => {
-            let finalUrl = url;
+    const cleanup = initializeHls(videoRef.current, selectedSource.url);
 
-            // Don't proxy already proxied URLs
-            if (!url.startsWith("/api/proxy")) {
-              const type = url.endsWith(".ts") ? "ts" : "m3u8";
-              finalUrl = `/api/proxy?url=${encodeURIComponent(
-                url
-              )}&type=${type}`;
-            }
-
-            xhr.open("GET", finalUrl, true);
-
-            // Add custom headers if needed
-            Object.entries(source.headers || {}).forEach(([key, value]) => {
-              xhr.setRequestHeader(key, value);
-            });
-          },
-        });
-
-        // Error handling
-        hls.on(Hls.Events.ERROR, function (event, data) {
-          console.log("HLS error:", data);
-          if (data.fatal) {
-            switch (data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR:
-                // Try to recover network error
-                console.log("Network error, trying to recover...");
-                hls.startLoad();
-                break;
-              case Hls.ErrorTypes.MEDIA_ERROR:
-                console.log("Media error, trying to recover...");
-                hls.recoverMediaError();
-                break;
-              default:
-                // Cannot recover
-                console.log("Fatal error, destroying HLS instance");
-                hls.destroy();
-                setError("Failed to load video. Please try again.");
-                break;
-            }
-          }
-        });
-
-        // Loading events
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          console.log("HLS Manifest parsed");
-          videoElement.play().catch(console.error);
-        });
-
-        hls.on(Hls.Events.LEVEL_LOADED, () => {
-          console.log("HLS Level loaded");
-        });
-
-        // Load the manifest
-        const proxyUrl = `/api/proxy?url=${encodeURIComponent(
-          manifestUrl
-        )}&type=m3u8`;
-        hls.loadSource(proxyUrl);
-        hls.attachMedia(videoElement);
-        hlsRef.current = hls;
-
-        // Add error handler for video element
-        videoElement.onerror = (e) => {
-          console.error("Video element error:", e);
-          setError("Video playback error. Please try again.");
-        };
-      } else if (videoElement.canPlayType("application/vnd.apple.mpegurl")) {
-        // For Safari
-        videoElement.src = `/api/proxy?url=${encodeURIComponent(
-          manifestUrl
-        )}&type=m3u8`;
-        videoElement.onerror = (e) => {
-          console.error("Video element error:", e);
-          setError("Video playback error. Please try again.");
-        };
-      } else {
-        setError("HLS playback is not supported in this browser.");
-      }
-    };
-
-    try {
-      initializeHLS(videoRef.current, selectedSource.url);
-    } catch (err) {
-      console.error("Error initializing HLS:", err);
-      setError("Failed to initialize video player");
-    }
-
-    // Cleanup function
     return () => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
+      cleanup?.();
+      cleanupHls();
     };
-  }, [source]);
+  }, [source, cleanupHls, initializeHls]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return cleanupHls;
+  }, [cleanupHls]);
 
   const navigateToEpisode = (episode: number) => {
     router.push(`/anime/${animeId}/${episode}`);

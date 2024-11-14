@@ -1,4 +1,3 @@
-// next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async headers() {
@@ -7,16 +6,20 @@ const nextConfig = {
         source: '/api/:path*',
         headers: [
           { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET, HEAD, OPTIONS' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, OPTIONS' },
           { key: 'Access-Control-Allow-Headers', value: '*' },
-          { key: 'Access-Control-Max-Age', value: '86400' },
+          { key: 'Cache-Control', value: 's-maxage=1, stale-while-revalidate' },
         ],
       },
     ];
   },
+  experimental: {
+    largePageDataBytes: 128 * 100000,
+  },
   images: {
     domains: ['gogocdn.net'],
-  }
+  },
+  poweredByHeader: false,
 }
 
 module.exports = nextConfig
