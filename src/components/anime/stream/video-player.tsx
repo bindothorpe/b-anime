@@ -1,22 +1,70 @@
 "use client";
 
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback, useEffect, useState } from "react";
 import Hls, { Events, ErrorTypes } from "hls.js";
 import { HlsError, EpisodeSource } from "@/types/anime";
+import Image from "next/image";
 
 interface VideoPlayerProps {
   source: EpisodeSource;
   onError: (error: string) => void;
+  animeCover: string;
+  animeTitle: string;
+  episodeNumber: string | number;
 }
 
-export function VideoPlayer({ source, onError }: VideoPlayerProps) {
+export function VideoPlayer({
+  source,
+  onError,
+  animeCover,
+  animeTitle,
+  episodeNumber,
+}: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const initializingRef = useRef(false);
+  const [isPaused, setIsPaused] = useState(true);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const SEEK_TIME = 10;
   const VOLUME_STEP = 0.1;
+
+  // Format time from seconds to MM:SS
+  const formatTime = (timeInSeconds: number) => {
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = Math.floor(timeInSeconds % 60);
+    return `${minutes.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  // Handle fullscreen changes
+  const handleFullscreenChange = useCallback(() => {
+    setIsFullscreen(Boolean(document.fullscreenElement));
+  }, []);
+
+  // Handle time updates
+  const handleTimeUpdate = useCallback(() => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+    }
+  }, []);
+
+  // Handle duration change
+  const handleDurationChange = useCallback(() => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration);
+    }
+  }, []);
+
+  const handlePlayPause = useCallback(() => {
+    if (videoRef.current) {
+      setIsPaused(videoRef.current.paused);
+    }
+  }, []);
 
   const cleanupHls = useCallback(() => {
     if (hlsRef.current) {
@@ -98,6 +146,7 @@ export function VideoPlayer({ source, onError }: VideoPlayerProps) {
           } else {
             video.pause();
           }
+          handlePlayPause();
           break;
 
         case "ArrowLeft":
@@ -128,15 +177,40 @@ export function VideoPlayer({ source, onError }: VideoPlayerProps) {
           break;
       }
     },
-    [shouldIgnoreKeyboardControls, toggleFullscreen, toggleMute]
+    [
+      shouldIgnoreKeyboardControls,
+      toggleFullscreen,
+      toggleMute,
+      handlePlayPause,
+    ]
   );
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyPress);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, [handleKeyPress]);
+  }, [handleKeyPress, handleFullscreenChange]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.addEventListener("play", handlePlayPause);
+    video.addEventListener("pause", handlePlayPause);
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("durationchange", handleDurationChange);
+
+    return () => {
+      video.removeEventListener("play", handlePlayPause);
+      video.removeEventListener("pause", handlePlayPause);
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("durationchange", handleDurationChange);
+    };
+  }, [handlePlayPause, handleTimeUpdate, handleDurationChange]);
 
   const initializeHls = useCallback(
     (videoElement: HTMLVideoElement, manifestUrl: string) => {
@@ -230,7 +304,7 @@ export function VideoPlayer({ source, onError }: VideoPlayerProps) {
   return (
     <div
       ref={containerRef}
-      className="aspect-video w-full bg-black rounded-lg overflow-hidden"
+      className="aspect-video w-full bg-black rounded-lg overflow-hidden relative"
     >
       <video
         ref={videoRef}
@@ -238,6 +312,59 @@ export function VideoPlayer({ source, onError }: VideoPlayerProps) {
         controls
         playsInline
       />
+
+      {/* Pause Overlay with dynamic positioning */}
+      {isPaused && (
+        <div className="absolute inset-0 bg-black/60 pointer-events-none">
+          <div
+            className={`absolute flex items-center gap-6 p-6 rounded-lg pointer-events-auto
+              ${isFullscreen ? "top-12 left-12" : "top-8 left-8"}`}
+          >
+            {/* Anime Cover */}
+            <div
+              className={`relative rounded-lg overflow-hidden
+              ${isFullscreen ? "w-48 h-72" : "w-32 h-48"}`}
+            >
+              <Image
+                src={animeCover}
+                alt={animeTitle}
+                fill
+                className="object-cover"
+                sizes={
+                  isFullscreen
+                    ? "(max-width: 192px) 100vw, 192px"
+                    : "(max-width: 128px) 100vw, 128px"
+                }
+              />
+            </div>
+
+            {/* Info */}
+            <div className="text-white">
+              <h2
+                className={`font-bold mb-2 ${
+                  isFullscreen ? "text-4xl" : "text-2xl"
+                }`}
+              >
+                {animeTitle}
+              </h2>
+              <p
+                className={`opacity-90 ${
+                  isFullscreen ? "text-2xl" : "text-lg"
+                }`}
+              >
+                Episode {episodeNumber}
+              </p>
+              <p
+                className={`opacity-75 mt-2 ${
+                  isFullscreen ? "text-lg" : "text-sm"
+                }`}
+              >
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

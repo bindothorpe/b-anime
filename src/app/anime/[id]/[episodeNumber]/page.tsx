@@ -98,7 +98,13 @@ export default function WatchPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <VideoPlayer source={source} onError={setError} />
+          <VideoPlayer
+            source={source}
+            onError={setError}
+            animeCover={animeInfo.image}
+            animeTitle={animeInfo.title}
+            episodeNumber={episodeNumber}
+          />
           <div className="mt-4 flex flex-col gap-4">
             <EpisodeNavigation
               episodeNumber={Number(episodeNumber)}
