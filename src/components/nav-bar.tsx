@@ -1,10 +1,10 @@
-// components/nav-bar.tsx
 "use client";
 
 import Link from "next/link";
 import { SearchBar } from "./search-bar";
-import { Home, Bookmark, Menu } from "lucide-react";
+import { Home, Bookmark, Menu, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/app/providers/auth-provider";
 import {
   Sheet,
   SheetContent,
@@ -12,8 +12,25 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { LogoutButton } from "@/components/logout-button";
 
 export function NavBar() {
+  const { user } = useAuth();
+
+  const AuthButton = () => {
+    if (user) {
+      return <LogoutButton />;
+    }
+    return (
+      <Button asChild variant="ghost">
+        <Link href="/login" className="flex items-center gap-2">
+          <LogIn className="h-4 w-4" />
+          <span>Login</span>
+        </Link>
+      </Button>
+    );
+  };
+
   return (
     <nav className="border-b bg-background">
       <div className="flex h-16 items-center px-4 sm:px-6">
@@ -44,6 +61,7 @@ export function NavBar() {
                   <Bookmark className="h-4 w-4" />
                   <span>Saved</span>
                 </Link>
+                <AuthButton />
               </div>
             </SheetContent>
           </Sheet>
@@ -77,6 +95,11 @@ export function NavBar() {
           <div className="w-full max-w-[500px]">
             <SearchBar />
           </div>
+        </div>
+
+        {/* Auth Button */}
+        <div className="hidden lg:block ml-4">
+          <AuthButton />
         </div>
       </div>
     </nav>
