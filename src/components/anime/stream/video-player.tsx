@@ -1,4 +1,3 @@
-// components/anime/stream/video-player.tsx
 "use client";
 
 import { useRef, useCallback, useEffect } from "react";
@@ -12,8 +11,12 @@ interface VideoPlayerProps {
 
 export function VideoPlayer({ source, onError }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const initializingRef = useRef(false);
+
+  const SEEK_TIME = 10;
+  const VOLUME_STEP = 0.1;
 
   const cleanupHls = useCallback(() => {
     if (hlsRef.current) {
@@ -25,6 +28,115 @@ export function VideoPlayer({ source, onError }: VideoPlayerProps) {
       videoRef.current.load();
     }
   }, []);
+
+  const shouldIgnoreKeyboardControls = useCallback(() => {
+    const activeElement = document.activeElement;
+    if (!activeElement) return false;
+
+    return (
+      activeElement.tagName === "INPUT" ||
+      activeElement.tagName === "TEXTAREA" ||
+      activeElement.getAttribute("contenteditable") === "true" ||
+      activeElement.closest('input, textarea, [contenteditable="true"]') !==
+        null ||
+      activeElement.getAttribute("role") === "searchbox" ||
+      activeElement.getAttribute("role") === "textbox"
+    );
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error("Error toggling fullscreen:", error);
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = !videoRef.current.muted;
+  }, []);
+
+  const handleKeyPress = useCallback(
+    (event: KeyboardEvent) => {
+      const video = videoRef.current;
+      if (!video || shouldIgnoreKeyboardControls()) return;
+
+      const isVideoFocused =
+        document.activeElement === video ||
+        document.activeElement?.tagName === "VIDEO" ||
+        video.contains(document.activeElement);
+
+      if (isVideoFocused && event.code === "Space") {
+        return;
+      }
+
+      if (
+        [
+          "Space",
+          "ArrowLeft",
+          "ArrowRight",
+          "ArrowUp",
+          "ArrowDown",
+          "KeyF",
+          "KeyM",
+        ].includes(event.code)
+      ) {
+        event.preventDefault();
+      }
+
+      switch (event.code) {
+        case "Space":
+          if (video.paused) {
+            video.play().catch(console.error);
+          } else {
+            video.pause();
+          }
+          break;
+
+        case "ArrowLeft":
+          video.currentTime = Math.max(0, video.currentTime - SEEK_TIME);
+          break;
+
+        case "ArrowRight":
+          video.currentTime = Math.min(
+            video.duration,
+            video.currentTime + SEEK_TIME
+          );
+          break;
+
+        case "ArrowUp":
+          video.volume = Math.min(1, video.volume + VOLUME_STEP);
+          break;
+
+        case "ArrowDown":
+          video.volume = Math.max(0, video.volume - VOLUME_STEP);
+          break;
+
+        case "KeyF":
+          toggleFullscreen();
+          break;
+
+        case "KeyM":
+          toggleMute();
+          break;
+      }
+    },
+    [shouldIgnoreKeyboardControls, toggleFullscreen, toggleMute]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, [handleKeyPress]);
 
   const initializeHls = useCallback(
     (videoElement: HTMLVideoElement, manifestUrl: string) => {
@@ -116,7 +228,10 @@ export function VideoPlayer({ source, onError }: VideoPlayerProps) {
   }, [cleanupHls]);
 
   return (
-    <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
+    <div
+      ref={containerRef}
+      className="aspect-video w-full bg-black rounded-lg overflow-hidden"
+    >
       <video ref={videoRef} className="w-full h-full" controls playsInline />
     </div>
   );
