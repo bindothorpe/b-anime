@@ -232,7 +232,12 @@ export function VideoPlayer({ source, onError }: VideoPlayerProps) {
       ref={containerRef}
       className="aspect-video w-full bg-black rounded-lg overflow-hidden"
     >
-      <video ref={videoRef} className="w-full h-full" controls playsInline />
+      <video
+        ref={videoRef}
+        className="w-full h-full focus-visible:outline-none"
+        controls
+        playsInline
+      />
     </div>
   );
 }
