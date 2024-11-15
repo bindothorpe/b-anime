@@ -3,9 +3,7 @@ import HomeContent from "@/components/home-content";
 
 export default function Home() {
   return (
-    <Suspense
-      fallback={<div className="container mx-auto py-6">Loading...</div>}
-    >
+    <Suspense fallback={<div className="container mx-auto py-6"></div>}>
       <HomeContent />
     </Suspense>
   );
