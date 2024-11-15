@@ -1,4 +1,3 @@
-// app/search/[query]/page.tsx
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -12,6 +11,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { CustomTabs } from "@/components/custom-tabs";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface AnimeResult {
   id: string;
@@ -35,10 +37,33 @@ export default function SearchPage() {
 
   const query = params.query as string;
   const currentPage = Number(searchParams.get("page")) || 1;
+  const currentTab = searchParams.get("type") || "1";
 
-  const [results, setResults] = useState<AnimeResult[]>([]);
+  const [filteredResults, setFilteredResults] = useState<AnimeResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasNextPage, setHasNextPage] = useState(false);
+
+  const tabItems = {
+    Sub: "1",
+    Dub: "2",
+    Chinese: "3",
+  };
+
+  // Filter results based on currentTab
+  const filterResults = (results: AnimeResult[], type: string) => {
+    return results.filter((anime) => {
+      switch (type) {
+        case "1": // Sub
+          return anime.subOrDub.toLowerCase() === "sub";
+        case "2": // Dub
+          return anime.subOrDub.toLowerCase() === "dub";
+        case "3": // Chinese
+          return anime.subOrDub.toLowerCase() === "chinese";
+        default:
+          return true;
+      }
+    });
+  };
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -48,8 +73,13 @@ export default function SearchPage() {
           `/api/anime/${encodeURIComponent(query)}?page=${currentPage}`
         );
         const data: SearchResponse = await response.json();
-        setResults(data.results);
-        setHasNextPage(data.hasNextPage);
+
+        // Filter results based on current tab
+        const filtered = filterResults(data.results, currentTab);
+        setFilteredResults(filtered);
+
+        // Update hasNextPage based on filtered results
+        setHasNextPage(filtered.length >= 20); // Assuming 20 is the page size
       } catch (error) {
         console.error("Search error:", error);
       } finally {
@@ -58,10 +88,19 @@ export default function SearchPage() {
     };
 
     fetchResults();
-  }, [query, currentPage]);
+  }, [query, currentPage, currentTab]);
 
   const handlePageChange = (page: number) => {
-    router.push(`/search/${query}?page=${page}`);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", page.toString());
+    router.push(`/search/${query}?${params.toString()}`);
+  };
+
+  const handleTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("type", value);
+    params.set("page", "1"); // Reset to page 1 when changing tabs
+    router.push(`/search/${query}?${params.toString()}`);
   };
 
   // Generate array of page numbers for pagination
@@ -80,12 +119,46 @@ export default function SearchPage() {
   return (
     <div className="container mx-auto py-6">
       <h1 className="text-2xl font-bold mb-6 pl-4">
-        Search Results for &ldquo;{query.replaceAll("%20", " ")}&ldquo;
+        Search Results for &ldquo;{query.replaceAll("%20", " ")}&rdquo;
       </h1>
-      <AnimeGrid results={results} isLoading={isLoading} />
+
+      <div className="flex justify-between">
+        {/* Tabs */}
+        <div className="mb-6 pl-4">
+          <CustomTabs items={tabItems} onTabChange={handleTabChange} />
+        </div>
+
+        {/* Top pagination */}
+        <div className="pr-4 flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={currentPage <= 1}
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(currentPage - 1);
+            }}
+          >
+            <ChevronLeft />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={!hasNextPage}
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(currentPage + 1);
+            }}
+          >
+            <ChevronRight />
+          </Button>
+        </div>
+      </div>
+
+      <AnimeGrid results={filteredResults} isLoading={isLoading} />
 
       {/* Pagination */}
-      {!isLoading && results.length > 0 && (
+      {!isLoading && filteredResults.length > 0 && (
         <div className="mt-8">
           <Pagination>
             <PaginationContent>
@@ -136,9 +209,9 @@ export default function SearchPage() {
       )}
 
       {/* No results message */}
-      {!isLoading && results.length === 0 && (
+      {!isLoading && filteredResults.length === 0 && (
         <div className="text-center text-muted-foreground mt-8">
-          No results found for &ldquo;{query}&ldquo;
+          No results found for &ldquo;{query}&rdquo;
         </div>
       )}
     </div>
