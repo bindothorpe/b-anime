@@ -11,6 +11,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { CustomTabs } from "@/components/custom-tabs";
+import { Button } from "./ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface EpisodeResult {
   id: string;
@@ -31,16 +34,25 @@ export default function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const currentPage = Number(searchParams.get("page")) || 1;
+  const currentTab = searchParams.get("type") || "1";
 
   const [results, setResults] = useState<EpisodeResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasNextPage, setHasNextPage] = useState(false);
 
+  const tabItems = {
+    Sub: "1",
+    Dub: "2",
+    Chinese: "3",
+  };
+
   useEffect(() => {
     const fetchResults = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/anime/recent?page=${currentPage}`);
+        const response = await fetch(
+          `/api/anime/recent?page=${currentPage}&type=${currentTab}`
+        );
         const data: RecentEpisodeResponse = await response.json();
         setResults(data.results);
         setHasNextPage(data.hasNextPage);
@@ -52,10 +64,19 @@ export default function HomeContent() {
     };
 
     fetchResults();
-  }, [currentPage]);
+  }, [currentPage, currentTab]);
 
   const handlePageChange = (page: number) => {
-    router.push(`/?page=${page}`);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", page.toString());
+    router.push(`/?${params.toString()}`);
+  };
+
+  const handleTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("type", value);
+    params.set("page", "1"); // Reset to page 1 when changing tabs
+    router.push(`/?${params.toString()}`);
   };
 
   // Generate array of page numbers for pagination
@@ -74,6 +95,40 @@ export default function HomeContent() {
   return (
     <div className="container mx-auto py-6">
       <h1 className="text-2xl font-bold mb-6 pl-4">Recent Episodes</h1>
+
+      <div className="flex justify-between">
+        {/* Tabs */}
+        <div className="mb-6 pl-4">
+          <CustomTabs items={tabItems} onTabChange={handleTabChange} />
+        </div>
+
+        {/* Top pagination */}
+        <div className="pr-4 flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={currentPage <= 1}
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(currentPage - 1);
+            }}
+          >
+            <ChevronLeft />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={!hasNextPage}
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(currentPage + 1);
+            }}
+          >
+            <ChevronRight />
+          </Button>
+        </div>
+      </div>
+
       <RecentEpisodesGrid results={results} isLoading={isLoading} />
 
       {/* Pagination */}
