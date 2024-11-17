@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { SearchBar } from "./search-bar";
-import { Home, Bookmark, Menu, LogIn } from "lucide-react";
+import { Home, Bookmark, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/app/providers/auth-provider";
 import {
