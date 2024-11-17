@@ -36,19 +36,27 @@ import {
 
 import { useAuth } from "@/app/providers/auth-provider";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function UserDropdown(props: { mobile?: boolean }) {
   const isMobile = props.mobile || false;
+  const { logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
 
   if (isMobile) {
-    return <DropDownMenuMobile />;
+    return <DropDownMenuMobile handleLogout={handleLogout} />;
   } else {
-    return <DropDownMenuDesktop />;
+    return <DropDownMenuDesktop handleLogout={handleLogout} />;
   }
 }
 
-function DropDownMenuMobile() {
-  const { user, logout } = useAuth();
+function DropDownMenuMobile(props: { handleLogout: () => void }) {
+  const { user } = useAuth();
   return (
     <Accordion type="single" collapsible className="w-full">
       <AccordionItem value="account">
@@ -87,7 +95,7 @@ function DropDownMenuMobile() {
                 <span>GitHub</span>
               </Link>
               <button
-                onClick={logout}
+                onClick={props.handleLogout}
                 className="flex items-center gap-2 py-2 hover:text-primary transition-colors text-left"
               >
                 <LogOut className="h-4 w-4" />
@@ -136,8 +144,8 @@ function DropDownMenuMobile() {
   );
 }
 
-function DropDownMenuDesktop() {
-  const { user, logout } = useAuth();
+function DropDownMenuDesktop(props: { handleLogout: () => void }) {
+  const { user } = useAuth();
   return (
     <div>
       <DropdownMenu>
@@ -152,7 +160,7 @@ function DropDownMenuDesktop() {
           <DropdownMenuGroup>
             {user ? (
               <>
-                <DropdownMenuItem disabled>
+                <DropdownMenuItem>
                   <Link href={"/profile"} className="flex gap-2">
                     <UserIcon />
                     <span>Profile</span>
@@ -219,7 +227,7 @@ function DropDownMenuDesktop() {
           {user && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
+              <DropdownMenuItem onClick={props.handleLogout}>
                 <LogOut />
                 <span>Log out</span>
                 <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>

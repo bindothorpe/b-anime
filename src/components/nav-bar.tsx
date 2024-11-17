@@ -4,7 +4,6 @@ import Link from "next/link";
 import { SearchBar } from "./search-bar";
 import { Home, Bookmark, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/app/providers/auth-provider";
 import {
   Sheet,
   SheetContent,
@@ -15,8 +14,6 @@ import {
 import UserDropdown from "./auth/user-dropdown";
 
 export function NavBar() {
-  const { user } = useAuth();
-
   return (
     <nav className="border-b bg-background">
       <div className="flex h-16 items-center px-4 sm:px-6">

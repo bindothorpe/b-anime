@@ -23,6 +23,7 @@ export default function LoginPage() {
       await login(email, password);
       router.push("/");
     } catch (err) {
+      console.log("Login error:", err);
       setError("Invalid email or password");
     }
   };
