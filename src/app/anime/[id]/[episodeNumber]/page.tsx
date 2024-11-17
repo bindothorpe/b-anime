@@ -103,6 +103,7 @@ export default function WatchPage() {
             onError={setError}
             animeCover={animeInfo.image}
             animeTitle={animeInfo.title}
+            animeId={animeId}
             episodeNumber={episodeNumber}
           />
           <div className="mt-4 flex flex-col gap-4">

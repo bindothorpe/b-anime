@@ -1,11 +1,12 @@
 // app/api/auth/register/route.ts
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: Request) {
   try {
     const { email, username, password } = await request.json();
 
-    // First, get management API token
+    // Get management API token
     const tokenResponse = await fetch(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, {
       method: 'POST',
       headers: {
@@ -53,7 +54,32 @@ export async function POST(request: Request) {
       );
     }
 
-    // Log in the user after successful registration using the same method as login route
+    // Create user in Prisma database using Auth0 user ID
+    try {
+      await prisma.user.create({
+        data: {
+          id: userData.user_id || userData.sub, // Auth0 user ID
+          email: email,
+          username: username,
+        },
+      });
+    } catch (dbError) {
+      // If database creation fails, delete the Auth0 user
+      await fetch(`https://${process.env.AUTH0_DOMAIN}/api/v2/users/${userData.user_id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`
+        }
+      });
+
+      console.error('Database user creation failed:', dbError);
+      return NextResponse.json(
+        { error: 'Failed to create user in database' },
+        { status: 500 }
+      );
+    }
+
+    // Log in the user after successful registration
     const loginResponse = await fetch(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, {
       method: 'POST',
       headers: {
@@ -81,13 +107,22 @@ export async function POST(request: Request) {
       );
     }
 
+    // Create session for the user
+    const session = await prisma.session.create({
+      data: {
+        token: loginData.access_token,
+        userId: userData.user_id || userData.sub,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+      },
+    });
+
     // Create response with success status
     const resp = NextResponse.json({ success: true });
 
-    // Set auth token cookie
+    // Set session token cookie
     resp.cookies.set({
-      name: 'auth_token',
-      value: loginData.access_token,
+      name: 'session_token',
+      value: session.token,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
