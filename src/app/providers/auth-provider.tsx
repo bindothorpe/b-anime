@@ -1,4 +1,3 @@
-// app/providers/auth-provider.tsx
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
@@ -19,13 +18,15 @@ interface AuthContextType {
   ) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
+  isCheckingAuth: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true); // Initial auth check
+  const [isLoading, setIsLoading] = useState(false); // Auth operations loading
 
   useEffect(() => {
     checkAuth();
@@ -45,22 +46,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Auth check failed:", error);
     } finally {
-      setIsLoading(false);
+      setIsCheckingAuth(false);
     }
   };
 
   const login = async (email: string, password: string) => {
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (!response.ok) {
-      throw new Error("Login failed");
+      if (!response.ok) {
+        throw new Error("Login failed");
+      }
+
+      await checkAuth(); // Fetch user data after successful login
+    } finally {
+      setIsLoading(false);
     }
-
-    await checkAuth(); // Fetch user data after successful login
   };
 
   const register = async (
@@ -68,26 +74,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     username: string,
     password: string
   ) => {
-    const response = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, username, password }),
-    });
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, username, password }),
+      });
 
-    if (!response.ok) {
-      throw new Error("Registration failed");
+      if (!response.ok) {
+        throw new Error("Registration failed");
+      }
+
+      await checkAuth(); // Fetch user data after successful registration
+    } finally {
+      setIsLoading(false);
     }
-
-    await checkAuth(); // Fetch user data after successful registration
   };
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null);
+    setIsLoading(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+    <AuthContext.Provider
+      value={{ user, login, register, logout, isLoading, isCheckingAuth }}
+    >
       {children}
     </AuthContext.Provider>
   );
