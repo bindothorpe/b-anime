@@ -5,12 +5,6 @@ export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
 
-    console.log('Auth0 Configuration:', {
-      domain: process.env.AUTH0_DOMAIN,
-      clientId: process.env.AUTH0_CLIENT_ID,
-      clientSecret: process.env.AUTH0_CLIENT_SECRET
-    });
-
     const tokenResponse = await fetch(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, {
       method: 'POST',
       headers: {
