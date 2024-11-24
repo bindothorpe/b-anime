@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { useWatchData } from "@/hooks/use-watch-data";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 interface AnimeInfo {
   id: string;
@@ -69,7 +68,7 @@ export default function AnimePage() {
   }
 
   const isWatchedWrapper = (id: string, episodeId: string) => {
-    var isWatchedResult = isWatched(id, episodeId);
+    const isWatchedResult = isWatched(id, episodeId);
     console.log("Checking if watched", id, episodeId, isWatchedResult);
     return isWatchedResult;
   };
