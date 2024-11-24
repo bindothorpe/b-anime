@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
+import { useWatchData } from "@/hooks/use-watch-data";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 interface AnimeInfo {
   id: string;
@@ -23,11 +25,13 @@ interface AnimeInfo {
   status: string;
   otherName: string;
   totalEpisodes: number;
-  episodes: Array<{
-    id: string;
-    number: number;
-    url: string;
-  }>;
+  episodes: Array<Episode>;
+}
+
+interface Episode {
+  id: string;
+  number: number;
+  url: string;
 }
 
 export default function AnimePage() {
@@ -36,6 +40,7 @@ export default function AnimePage() {
 
   const [animeInfo, setAnimeInfo] = useState<AnimeInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { isWatched } = useWatchData();
 
   const router = useRouter();
 
@@ -62,6 +67,12 @@ export default function AnimePage() {
   if (!animeInfo) {
     return <div>Failed to load anime information.</div>;
   }
+
+  const isWatchedWrapper = (id: string, episodeId: string) => {
+    var isWatchedResult = isWatched(id, episodeId);
+    console.log("Checking if watched", id, episodeId, isWatchedResult);
+    return isWatchedResult;
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -117,7 +128,11 @@ export default function AnimePage() {
                   {animeInfo.episodes.map((episode) => (
                     <Button
                       key={episode.id}
-                      variant="outline"
+                      variant={
+                        isWatchedWrapper(id, episode.number.toString())
+                          ? "default"
+                          : "outline"
+                      }
                       className="w-full"
                       onClick={() => {
                         router.push(`/anime/${id}/${episode.number}`);

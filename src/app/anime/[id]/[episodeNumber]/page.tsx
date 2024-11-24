@@ -11,6 +11,7 @@ import { EpisodeBreadcrumb } from "@/components/anime/stream/episode-breadcrumb"
 import { WatchSkeleton } from "@/components/anime/stream/watch-skeleton";
 import { formatEpisodeId } from "@/utils/episode";
 import { EpisodeSource, AnimeInfo } from "@/types/anime";
+import { useWatchData } from "@/hooks/use-watch-data";
 
 export default function WatchPage() {
   const params = useParams();
@@ -24,6 +25,7 @@ export default function WatchPage() {
   const [animeInfo, setAnimeInfo] = useState<AnimeInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { markWatched } = useWatchData();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,6 +58,9 @@ export default function WatchPage() {
     };
 
     fetchData();
+
+    console.log("Marking as watched", animeId, episodeNumber);
+    markWatched(animeId, episodeNumber);
   }, [episodeId, animeId]);
 
   const navigateToEpisode = (episode: number) => {
