@@ -8,8 +8,8 @@ import Image from "next/image";
 interface VideoPlayerProps {
   source: EpisodeSource;
   onError: (error: string) => void;
-  animeCover: string;
-  animeTitle: string;
+  animeCover: string | undefined;
+  animeTitle: string | undefined;
   episodeNumber: string | number;
 }
 
@@ -322,7 +322,7 @@ export function VideoPlayer({
               className={`relative rounded-lg overflow-hidden
               ${isFullscreen ? "w-48 h-72" : "w-32 h-48"}`}
             >
-              <Image
+              {/* <Image
                 src={animeCover}
                 alt={animeTitle}
                 fill
@@ -332,7 +332,7 @@ export function VideoPlayer({
                     ? "(max-width: 192px) 100vw, 192px"
                     : "(max-width: 128px) 100vw, 128px"
                 }
-              />
+              /> */}
             </div>
 
             <div className="text-white">
