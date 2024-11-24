@@ -61,7 +61,7 @@ export default function WatchPage() {
 
     console.log("Marking as watched", animeId, episodeNumber);
     markWatched(animeId, episodeNumber);
-  }, [episodeId, animeId, episodeNumber, markWatched]);
+  }, [episodeId, animeId, episodeNumber]);
 
   const navigateToEpisode = (episode: number) => {
     router.push(`/anime/${animeId}/${episode}`);

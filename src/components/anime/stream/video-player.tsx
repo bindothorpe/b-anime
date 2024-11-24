@@ -23,7 +23,7 @@ export function VideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
-  const initializingRef = useRef(false);
+  const sourceUrlRef = useRef<string | null>(null);
   const [isPaused, setIsPaused] = useState(true);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -32,7 +32,6 @@ export function VideoPlayer({
   const SEEK_TIME = 10;
   const VOLUME_STEP = 0.1;
 
-  // Format time from seconds to MM:SS
   const formatTime = (timeInSeconds: number) => {
     const minutes = Math.floor(timeInSeconds / 60);
     const seconds = Math.floor(timeInSeconds % 60);
@@ -41,19 +40,16 @@ export function VideoPlayer({
       .padStart(2, "0")}`;
   };
 
-  // Handle fullscreen changes
   const handleFullscreenChange = useCallback(() => {
     setIsFullscreen(Boolean(document.fullscreenElement));
   }, []);
 
-  // Handle time updates
   const handleTimeUpdate = useCallback(() => {
     if (videoRef.current) {
       setCurrentTime(videoRef.current.currentTime);
     }
   }, []);
 
-  // Handle duration change
   const handleDurationChange = useCallback(() => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
@@ -68,12 +64,10 @@ export function VideoPlayer({
 
   const cleanupHls = useCallback(() => {
     if (hlsRef.current) {
+      console.log("Cleaning up HLS instance");
       hlsRef.current.destroy();
       hlsRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.src = "";
-      videoRef.current.load();
+      sourceUrlRef.current = null;
     }
   }, []);
 
@@ -212,10 +206,30 @@ export function VideoPlayer({
     };
   }, [handlePlayPause, handleTimeUpdate, handleDurationChange]);
 
-  const initializeHls = useCallback(
-    (videoElement: HTMLVideoElement, manifestUrl: string) => {
-      if (initializingRef.current) return;
-      initializingRef.current = true;
+  useEffect(() => {
+    if (!source || !videoRef.current) return;
+
+    const selectedSource =
+      source.sources.find((s) => s.quality === "1080p") || source.sources[0];
+
+    if (!selectedSource) {
+      onError("No valid video source found");
+      return;
+    }
+
+    // Skip initialization if we're already playing this source
+    if (sourceUrlRef.current === selectedSource.url && hlsRef.current) {
+      console.log("Source already initialized, skipping...");
+      return;
+    }
+
+    console.log("Initializing new source:", selectedSource.url);
+
+    // Clean up existing instance
+    cleanupHls();
+
+    const initializeHls = () => {
+      if (!videoRef.current) return;
 
       try {
         if (Hls.isSupported()) {
@@ -225,81 +239,66 @@ export function VideoPlayer({
             fragLoadingTimeOut: 20000,
             manifestLoadingTimeOut: 20000,
             levelLoadingTimeOut: 20000,
+            startLevel: -1,
           });
 
           const onHlsError = (_event: Events.ERROR, data: HlsError) => {
-            if (data.fatal) {
-              switch (data.type) {
-                case ErrorTypes.NETWORK_ERROR:
-                  hls.startLoad();
-                  break;
-                case ErrorTypes.MEDIA_ERROR:
-                  hls.recoverMediaError();
-                  break;
-                default:
-                  cleanupHls();
-                  onError("Fatal playback error");
-                  break;
-              }
+            if (!data.fatal) return;
+
+            switch (data.type) {
+              case ErrorTypes.NETWORK_ERROR:
+                console.log("Network error, attempting to recover...");
+                hls.startLoad();
+                break;
+              case ErrorTypes.MEDIA_ERROR:
+                console.log("Media error, attempting to recover...");
+                hls.recoverMediaError();
+                break;
+              default:
+                console.error("Fatal error:", data);
+                cleanupHls();
+                onError("Fatal playback error");
+                break;
             }
           };
 
           const onManifestParsed = () => {
-            videoElement.play().catch(console.error);
+            console.log("Manifest parsed, starting playback");
+            sourceUrlRef.current = selectedSource.url;
+            videoRef.current?.play().catch(console.error);
           };
 
           hls.on(Events.ERROR, onHlsError);
           hls.on(Events.MANIFEST_PARSED, onManifestParsed);
 
-          hls.loadSource(manifestUrl);
-          hls.attachMedia(videoElement);
+          hls.loadSource(selectedSource.url);
+          hls.attachMedia(videoRef.current);
           hlsRef.current = hls;
-
-          return () => {
-            hls.off(Events.ERROR, onHlsError);
-            hls.off(Events.MANIFEST_PARSED, onManifestParsed);
-          };
-        } else if (videoElement.canPlayType("application/vnd.apple.mpegurl")) {
-          videoElement.src = manifestUrl;
-          videoElement.addEventListener("loadedmetadata", () => {
-            videoElement.play().catch(console.error);
-          });
+        } else if (
+          videoRef.current.canPlayType("application/vnd.apple.mpegurl")
+        ) {
+          console.log("Using native HLS playback");
+          videoRef.current.src = selectedSource.url;
+          sourceUrlRef.current = selectedSource.url;
         } else {
           onError("HLS playback is not supported in this browser.");
         }
       } catch (error) {
         console.error("HLS initialization error:", error);
         onError("Failed to initialize video player");
-      } finally {
-        initializingRef.current = false;
       }
-    },
-    [cleanupHls, onError]
-  );
+    };
 
-  useEffect(() => {
-    if (!source || !videoRef.current) return;
-
-    cleanupHls();
-
-    const selectedSource =
-      source.sources.find((s) => s.quality === "1080p") || source.sources[0];
-    if (!selectedSource) {
-      onError("No valid video source found");
-      return;
-    }
-
-    const cleanup = initializeHls(videoRef.current, selectedSource.url);
+    // Initialize with a slight delay to avoid race conditions
+    const timeoutId = setTimeout(initializeHls, 0);
 
     return () => {
-      cleanup?.();
-      cleanupHls();
+      clearTimeout(timeoutId);
+      if (sourceUrlRef.current !== selectedSource.url) {
+        cleanupHls();
+      }
     };
-  }, [source, cleanupHls, initializeHls, onError]);
-
-  useEffect(() => {
-    return cleanupHls;
-  }, [cleanupHls]);
+  }, [source, cleanupHls, onError]);
 
   return (
     <div
@@ -313,7 +312,6 @@ export function VideoPlayer({
         playsInline
       />
 
-      {/* Hide overlay on mobile (<768px), show on md and up */}
       {isPaused && (
         <div className="absolute inset-0 bg-black/60 pointer-events-none hidden md:block">
           <div
