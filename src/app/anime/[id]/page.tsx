@@ -7,7 +7,6 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRouter } from "next/navigation";
 import { useWatchData } from "@/hooks/use-watch-data";
 import EpisodeButtonGrid from "@/components/anime/episode-button-grid";
 
