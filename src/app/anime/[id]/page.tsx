@@ -4,12 +4,11 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRouter } from "next/navigation";
 import { useWatchData } from "@/hooks/use-watch-data";
+import EpisodeButtonGrid from "@/components/anime/episode-button-grid";
 
 interface AnimeInfo {
   id: string;
@@ -41,8 +40,6 @@ export default function AnimePage() {
   const [isLoading, setIsLoading] = useState(true);
   const { isWatched } = useWatchData();
 
-  const router = useRouter();
-
   useEffect(() => {
     const fetchAnimeInfo = async () => {
       try {
@@ -66,12 +63,6 @@ export default function AnimePage() {
   if (!animeInfo) {
     return <div>Failed to load anime information.</div>;
   }
-
-  const isWatchedWrapper = (id: string, episodeId: string) => {
-    const isWatchedResult = isWatched(id, episodeId);
-    console.log("Checking if watched", id, episodeId, isWatchedResult);
-    return isWatchedResult;
-  };
 
   return (
     <div className="container mx-auto py-8">
@@ -123,24 +114,13 @@ export default function AnimePage() {
               {/* Episodes */}
               <div>
                 <h3 className="font-semibold mb-2">Episodes</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-                  {animeInfo.episodes.map((episode) => (
-                    <Button
-                      key={episode.id}
-                      variant={
-                        isWatchedWrapper(id, episode.number.toString())
-                          ? "default"
-                          : "outline"
-                      }
-                      className="w-full"
-                      onClick={() => {
-                        router.push(`/anime/${id}/${episode.number}`);
-                      }}
-                    >
-                      {episode.number}
-                    </Button>
-                  ))}
-                </div>
+                <EpisodeButtonGrid
+                  episodeButtonProps={animeInfo.episodes.map((episode) => ({
+                    animeId: id,
+                    episodeNumber: episode.number.toString(),
+                    isWatched: isWatched,
+                  }))}
+                />
               </div>
             </div>
           </div>
