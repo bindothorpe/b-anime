@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "@/components/anime/stream/video-player";
 import { EpisodeNavigation } from "@/components/anime/stream/episode-navigation";
 import { EpisodeBreadcrumb } from "@/components/anime/stream/episode-breadcrumb";
-import { WatchSkeleton } from "@/components/anime/stream/watch-skeleton";
 import { formatEpisodeId } from "@/utils/episode";
 import { EpisodeSource, AnimeInfo } from "@/types/anime";
 import { useWatchData } from "@/hooks/use-watch-data";
@@ -139,7 +138,6 @@ export default function WatchPage() {
             <VideoPlayer
               source={source}
               onError={setSourceError}
-              animeCover={animeInfo?.image}
               animeTitle={animeInfo?.title || "Loading..."}
               episodeNumber={episodeNumber}
             />

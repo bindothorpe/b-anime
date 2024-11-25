@@ -3,12 +3,10 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 import Hls, { Events, ErrorTypes } from "hls.js";
 import { HlsError, EpisodeSource } from "@/types/anime";
-import Image from "next/image";
 
 interface VideoPlayerProps {
   source: EpisodeSource;
   onError: (error: string) => void;
-  animeCover: string | undefined;
   animeTitle: string | undefined;
   episodeNumber: string | number;
 }
@@ -16,7 +14,6 @@ interface VideoPlayerProps {
 export function VideoPlayer({
   source,
   onError,
-  animeCover,
   animeTitle,
   episodeNumber,
 }: VideoPlayerProps) {

@@ -4,7 +4,6 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,8 +40,6 @@ export default function AnimePage() {
   const [animeInfo, setAnimeInfo] = useState<AnimeInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { isWatched } = useWatchData();
-
-  const router = useRouter();
 
   useEffect(() => {
     const fetchAnimeInfo = async () => {
