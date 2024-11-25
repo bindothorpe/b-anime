@@ -1,4 +1,3 @@
-// components/anime/stream/episode-breadcrumb.tsx
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { AnimeInfo } from "@/types/anime";
+import { useWatchData } from "@/hooks/use-watch-data";
 
 interface EpisodeBreadcrumbProps {
   animeInfo: AnimeInfo;
@@ -28,6 +28,8 @@ export function EpisodeBreadcrumb({
   episodeNumber,
   animeId,
 }: EpisodeBreadcrumbProps) {
+  const { isWatched } = useWatchData();
+
   return (
     <div className="flex items-center gap-2">
       <Breadcrumb>
@@ -50,7 +52,14 @@ export function EpisodeBreadcrumb({
                       key={episode.id}
                       href={`/anime/${animeId}/${episode.number}`}
                     >
-                      <Button variant="link" className="w-full">
+                      <Button
+                        variant="link"
+                        className={`w-full ${
+                          isWatched(animeId, episode.number.toString())
+                            ? "text-muted-foreground"
+                            : ""
+                        }`}
+                      >
                         Episode {episode.number}
                       </Button>
                     </Link>
