@@ -144,6 +144,8 @@ export default function WatchPage() {
                 console.log("Updating progress:", seconds);
                 updateSecondsWatched(animeId, episodeNumber, seconds);
               }}
+              animeId={animeId}
+              episodeId={episodeNumber}
             />
           ) : (
             <div className="text-center p-4">Failed to load video</div>
