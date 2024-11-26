@@ -14,6 +14,7 @@ import {
 import { CustomTabs } from "@/components/custom-tabs";
 import { Button } from "./ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ContinueWatchingSection } from "./anime/continue-watching-section";
 
 interface EpisodeResult {
   id: string;
@@ -94,11 +95,13 @@ export default function HomeContent() {
 
   return (
     <div className="container mx-auto py-6">
-      <h1 className="text-2xl font-bold mb-6 pl-4">Recent Episodes</h1>
+      <h1 className="text-2xl font-bold mb-2 pl-4">Continue watching</h1>
+      <ContinueWatchingSection />
+      <h1 className="text-2xl font-bold mb-2 pl-4 mt-12">Recent Episodes</h1>
 
       <div className="flex justify-between">
         {/* Tabs */}
-        <div className="mb-6 pl-4">
+        <div className="mb-4 pl-4">
           <CustomTabs items={tabItems} onTabChange={handleTabChange} />
         </div>
 

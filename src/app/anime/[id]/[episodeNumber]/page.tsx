@@ -27,7 +27,7 @@ export default function WatchPage() {
   const [infoLoading, setInfoLoading] = useState(true);
   const [sourceError, setSourceError] = useState<string | null>(null);
   const [infoError, setInfoError] = useState<string | null>(null);
-  const { markWatched, isWatched } = useWatchData();
+  const { markWatched, isWatched, updateSecondsWatched } = useWatchData();
 
   // Mark as watched once when the component mounts
   useEffect(() => {
@@ -140,6 +140,12 @@ export default function WatchPage() {
               onError={setSourceError}
               animeTitle={animeInfo?.title || "Loading..."}
               episodeNumber={episodeNumber}
+              onUpdateProgress={(seconds) => {
+                console.log("Updating progress:", seconds);
+                updateSecondsWatched(animeId, episodeNumber, seconds);
+              }}
+              animeId={animeId}
+              episodeId={episodeNumber}
             />
           ) : (
             <div className="text-center p-4">Failed to load video</div>

@@ -3,12 +3,16 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 import Hls, { Events, ErrorTypes } from "hls.js";
 import { HlsError, EpisodeSource } from "@/types/anime";
+import * as ls from "local-storage";
 
 interface VideoPlayerProps {
   source: EpisodeSource;
   onError: (error: string) => void;
   animeTitle: string | undefined;
   episodeNumber: string | number;
+  onUpdateProgress: (seconds: number) => void;
+  animeId: string;
+  episodeId: string;
 }
 
 export function VideoPlayer({
@@ -16,11 +20,16 @@ export function VideoPlayer({
   onError,
   animeTitle,
   episodeNumber,
+  onUpdateProgress,
+  animeId,
+  episodeId,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const sourceUrlRef = useRef<string | null>(null);
+  const lastSavedTimeRef = useRef<number>(0);
+  const initialSeekPerformed = useRef<boolean>(false);
   const [isPaused, setIsPaused] = useState(true);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -28,6 +37,8 @@ export function VideoPlayer({
 
   const SEEK_TIME = 10;
   const VOLUME_STEP = 0.1;
+  const SAVE_INTERVAL = 10; // Minimum seconds between saves
+  const STORAGE_KEY = "anime_watch_data";
 
   const formatTime = (timeInSeconds: number) => {
     const minutes = Math.floor(timeInSeconds / 60);
@@ -37,21 +48,61 @@ export function VideoPlayer({
       .padStart(2, "0")}`;
   };
 
+  const getStoredTime = useCallback(() => {
+    const watchData = ls.get<{
+      anime: Array<{
+        id: string;
+        episodes: Array<{
+          id: string;
+          secondsWatched: number;
+        }>;
+      }>;
+    }>(STORAGE_KEY);
+
+    if (!watchData) return 0;
+
+    const anime = watchData.anime.find((a) => a.id === animeId);
+    if (!anime) return 0;
+
+    const episode = anime.episodes.find((e) => e.id === episodeId);
+    return episode ? episode.secondsWatched : 0;
+  }, [animeId, episodeId]);
+
+  const seekToStoredTime = useCallback(() => {
+    if (!videoRef.current || initialSeekPerformed.current) return;
+
+    const storedTime = getStoredTime();
+    if (storedTime > 10) {
+      // Seek to 10 seconds before the stored time
+      videoRef.current.currentTime = Math.max(0, storedTime - 10);
+      initialSeekPerformed.current = true;
+    }
+  }, [getStoredTime]);
+
   const handleFullscreenChange = useCallback(() => {
     setIsFullscreen(Boolean(document.fullscreenElement));
   }, []);
 
   const handleTimeUpdate = useCallback(() => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
+    if (!videoRef.current) return;
+
+    const currentSeconds = Math.floor(videoRef.current.currentTime);
+    setCurrentTime(currentSeconds);
+
+    // Check if enough time has passed since last save
+    if (currentSeconds - lastSavedTimeRef.current >= SAVE_INTERVAL) {
+      onUpdateProgress(currentSeconds);
+      lastSavedTimeRef.current = currentSeconds;
     }
-  }, []);
+  }, [onUpdateProgress]);
 
   const handleDurationChange = useCallback(() => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
+      // Try to seek to stored time when duration becomes available
+      seekToStoredTime();
     }
-  }, []);
+  }, [seekToStoredTime]);
 
   const handlePlayPause = useCallback(() => {
     if (videoRef.current) {
@@ -214,15 +265,12 @@ export function VideoPlayer({
       return;
     }
 
-    // Skip initialization if we're already playing this source
     if (sourceUrlRef.current === selectedSource.url && hlsRef.current) {
       console.log("Source already initialized, skipping...");
       return;
     }
 
     console.log("Initializing new source:", selectedSource.url);
-
-    // Clean up existing instance
     cleanupHls();
 
     const initializeHls = () => {
@@ -286,7 +334,6 @@ export function VideoPlayer({
       }
     };
 
-    // Initialize with a slight delay to avoid race conditions
     const timeoutId = setTimeout(initializeHls, 0);
 
     return () => {
@@ -318,19 +365,7 @@ export function VideoPlayer({
             <div
               className={`relative rounded-lg overflow-hidden
               ${isFullscreen ? "w-48 h-72" : "w-32 h-48"}`}
-            >
-              {/* <Image
-                src={animeCover}
-                alt={animeTitle}
-                fill
-                className="object-cover"
-                sizes={
-                  isFullscreen
-                    ? "(max-width: 192px) 100vw, 192px"
-                    : "(max-width: 128px) 100vw, 128px"
-                }
-              /> */}
-            </div>
+            ></div>
 
             <div className="text-white">
               <h2
