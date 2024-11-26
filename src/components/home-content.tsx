@@ -95,9 +95,8 @@ export default function HomeContent() {
 
   return (
     <div className="container mx-auto py-6">
-      <h1 className="text-2xl font-bold mb-2 pl-4">Continue watching</h1>
       <ContinueWatchingSection />
-      <h1 className="text-2xl font-bold mb-2 pl-4 mt-12">Recent Episodes</h1>
+      <h1 className="text-2xl font-bold mb-2 pl-4">Recent Episodes</h1>
 
       <div className="flex justify-between">
         {/* Tabs */}

@@ -5,6 +5,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { ContinueWatchingCard } from "./continue-watching-card";
 import AnimeResult from "@/types/anime-result";
 import { Skeleton } from "../ui/skeleton";
+import { Card, CardHeader } from "../ui/card";
 
 interface ContinueWatchingResult {
   animeId: string;
@@ -18,6 +19,25 @@ interface ContinueWatchingResult {
 
 const STORAGE_KEY = "anime_watch_data";
 const MAX_ITEMS = 9;
+
+function ContinueWatchingCardSkeleton() {
+  return (
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
+      <div className="aspect-[3/4] relative">
+        <Skeleton className="h-full w-full" />
+      </div>
+      <CardHeader className="p-2 md:p-4 space-y-2">
+        <Skeleton className="h-8 md:h-4 w-2/3" />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-4 md:h-3 w-16 md:w-24" />
+          </div>
+          <Skeleton className="h-4 w-full" />
+        </div>
+      </CardHeader>
+    </Card>
+  );
+}
 
 export function ContinueWatchingSection() {
   const [results, setResults] = useState<ContinueWatchingResult[]>([]);
@@ -96,18 +116,26 @@ export function ContinueWatchingSection() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <ScrollArea className="w-full whitespace-nowrap rounded-md">
-          <div className="flex w-full gap-4 p-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="w-[250px] shrink-0">
-                <Skeleton className="h-[448px]" />
-              </div>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      </div>
+      <>
+        <h1 className="text-xl md:text-2xl font-bold mb-2 pl-4">
+          Continue watching
+        </h1>
+        <div className="mb-8 md:mb-12">
+          <ScrollArea className="w-full whitespace-nowrap rounded-md">
+            <div className="flex gap-4 p-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="w-[294px] md:w-[232px] lg:w-[234px] xl:w-[234px] max-xl:[284px] flex-shrink-0"
+                >
+                  <ContinueWatchingCardSkeleton />
+                </div>
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </div>
+      </>
     );
   }
 
@@ -116,30 +144,38 @@ export function ContinueWatchingSection() {
   }
 
   return (
-    <div className="space-y-4">
-      <ScrollArea className="w-full whitespace-nowrap rounded-md">
-        <div className="flex w-full gap-4 p-4">
-          {results.map((item) => (
-            <div key={item.animeId} className="w-[250px] shrink-0">
-              <ContinueWatchingCard id={item.animeId} {...item} />
-            </div>
-          ))}
-          {results.length == 9 && (
-            <div className="w-[250px] shrink-0">
-              <ContinueWatchingCard
-                id=""
-                title=""
-                image=""
-                episodeNumber={0}
-                progress={0}
-                updatedAt=""
-                isMoreCard
-              />
-            </div>
-          )}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
-    </div>
+    <>
+      <h1 className="text-xl md:text-2xl font-bold mb-2 pl-4">
+        Continue watching
+      </h1>
+      <div className="mb-8 md:mb-12">
+        <ScrollArea className="w-full whitespace-nowrap rounded-md">
+          <div className="flex gap-4 p-4">
+            {results.map((item) => (
+              <div
+                key={item.animeId}
+                className="w-[294px] md:w-[232px] lg:w-[234px] xl:w-[234px] max-xl:[284px] flex-shrink-0"
+              >
+                <ContinueWatchingCard id={item.animeId} {...item} />
+              </div>
+            ))}
+            {results.length === MAX_ITEMS && (
+              <div className="w-[294px] md:w-[232px] lg:w-[234px] xl:w-[234px] max-xl:[284px] flex-shrink-0">
+                <ContinueWatchingCard
+                  id=""
+                  title=""
+                  image=""
+                  episodeNumber={0}
+                  progress={0}
+                  updatedAt=""
+                  isMoreCard
+                />
+              </div>
+            )}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </div>
+    </>
   );
 }
