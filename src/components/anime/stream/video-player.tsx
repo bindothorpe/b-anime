@@ -11,6 +11,7 @@ interface VideoPlayerProps {
   animeTitle: string | undefined;
   episodeNumber: string | number;
   onUpdateProgress: (seconds: number) => void;
+  onDurationFound: (duration: number) => void;
   animeId: string;
   episodeId: string;
 }
@@ -21,6 +22,7 @@ export function VideoPlayer({
   animeTitle,
   episodeNumber,
   onUpdateProgress,
+  onDurationFound,
   animeId,
   episodeId,
 }: VideoPlayerProps) {
@@ -99,6 +101,7 @@ export function VideoPlayer({
   const handleDurationChange = useCallback(() => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
+      onDurationFound(videoRef.current.duration);
       // Try to seek to stored time when duration becomes available
       seekToStoredTime();
     }

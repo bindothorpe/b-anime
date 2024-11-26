@@ -32,6 +32,50 @@ export function useWatchData() {
     [watchData]
   );
 
+  const updateDuration = React.useCallback(
+    (animeId: string, episodeId: string, duration: number) => {
+      const indexes = findAnimeAndEpisode(animeId, episodeId);
+      const newData = { ...watchData };
+
+      if (!indexes) {
+        // If anime doesn't exist, create it with the episode
+        newData.anime.push({
+          id: animeId,
+          episodes: [
+            {
+              id: episodeId,
+              secondsWatched: 0,
+              watched: false,
+              duration: duration,
+              updatedAt: new Date().toISOString(),
+            },
+          ],
+        });
+      } else {
+        const { animeIndex, episodeIndex } = indexes;
+
+        if (episodeIndex === -1) {
+          // Anime exists but episode doesn't - add the episode
+          newData.anime[animeIndex].episodes.push({
+            id: episodeId,
+            secondsWatched: 0,
+            watched: false,
+            duration: duration,
+            updatedAt: new Date().toISOString(),
+          });
+        } else {
+          // Both exist - update duration
+          newData.anime[animeIndex].episodes[episodeIndex].duration = duration;
+          newData.anime[animeIndex].episodes[episodeIndex].updatedAt =
+            new Date().toISOString();
+        }
+      }
+
+      saveData(newData);
+    },
+    [watchData, findAnimeAndEpisode, saveData]
+  );
+
   const markWatched = React.useCallback(
     (animeId: string, episodeId: string) => {
       const indexes = findAnimeAndEpisode(animeId, episodeId);
@@ -46,6 +90,7 @@ export function useWatchData() {
               id: episodeId,
               secondsWatched: 0,
               watched: true,
+              duration: 0,
               updatedAt: new Date().toISOString(),
             },
           ],
@@ -59,6 +104,7 @@ export function useWatchData() {
             id: episodeId,
             secondsWatched: 0,
             watched: true,
+            duration: 0,
             updatedAt: new Date().toISOString(),
           });
         } else {
@@ -87,7 +133,8 @@ export function useWatchData() {
             {
               id: episodeId,
               secondsWatched: seconds,
-              watched: true,
+              watched: false,
+              duration: 0,
               updatedAt: new Date().toISOString(),
             },
           ],
@@ -100,7 +147,8 @@ export function useWatchData() {
           newData.anime[animeIndex].episodes.push({
             id: episodeId,
             secondsWatched: seconds,
-            watched: true,
+            watched: false,
+            duration: 0,
             updatedAt: new Date().toISOString(),
           });
         } else {
@@ -143,6 +191,17 @@ export function useWatchData() {
     [watchData, findAnimeAndEpisode]
   );
 
+  const getDuration = React.useCallback(
+    (animeId: string, episodeId: string): number => {
+      const indexes = findAnimeAndEpisode(animeId, episodeId);
+      if (!indexes || indexes.episodeIndex === -1) return 0;
+
+      const { animeIndex, episodeIndex } = indexes;
+      return watchData.anime[animeIndex].episodes[episodeIndex].duration || 0;
+    },
+    [watchData, findAnimeAndEpisode]
+  );
+
   const getLastUpdated = React.useCallback(
     (animeId: string, episodeId: string): string | null => {
       const indexes = findAnimeAndEpisode(animeId, episodeId);
@@ -158,6 +217,8 @@ export function useWatchData() {
     watchData,
     markWatched,
     updateSecondsWatched,
+    updateDuration,
+    getDuration,
     isWatched,
     getSecondsWatched,
     getLastUpdated,

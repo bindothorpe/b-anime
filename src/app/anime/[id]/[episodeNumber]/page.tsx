@@ -27,7 +27,8 @@ export default function WatchPage() {
   const [infoLoading, setInfoLoading] = useState(true);
   const [sourceError, setSourceError] = useState<string | null>(null);
   const [infoError, setInfoError] = useState<string | null>(null);
-  const { markWatched, isWatched, updateSecondsWatched } = useWatchData();
+  const { markWatched, isWatched, updateSecondsWatched, updateDuration } =
+    useWatchData();
 
   // Mark as watched once when the component mounts
   useEffect(() => {
@@ -140,10 +141,12 @@ export default function WatchPage() {
               onError={setSourceError}
               animeTitle={animeInfo?.title || "Loading..."}
               episodeNumber={episodeNumber}
-              onUpdateProgress={(seconds) => {
-                console.log("Updating progress:", seconds);
-                updateSecondsWatched(animeId, episodeNumber, seconds);
-              }}
+              onUpdateProgress={(seconds) =>
+                updateSecondsWatched(animeId, episodeNumber, seconds)
+              }
+              onDurationFound={(duration) =>
+                updateDuration(animeId, episodeNumber, duration)
+              }
               animeId={animeId}
               episodeId={episodeNumber}
             />

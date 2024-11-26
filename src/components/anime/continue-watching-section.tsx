@@ -62,7 +62,8 @@ export function ContinueWatchingSection() {
             if (!latestEpisode) return null;
 
             // Calculate progress percentage
-            const progress = (latestEpisode.secondsWatched / (24 * 60)) * 100; // Assuming average episode length is 24 minutes
+            const progress =
+              (latestEpisode.secondsWatched / latestEpisode.duration) * 100; // Assuming average episode length is 24 minutes
 
             // Only include if progress is between 10% and 90%
             if (progress < 10 || progress > 90) return null;
