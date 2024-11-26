@@ -9,6 +9,7 @@ interface VideoPlayerProps {
   onError: (error: string) => void;
   animeTitle: string | undefined;
   episodeNumber: string | number;
+  onUpdateProgress: (seconds: number) => void;
 }
 
 export function VideoPlayer({
@@ -16,11 +17,13 @@ export function VideoPlayer({
   onError,
   animeTitle,
   episodeNumber,
+  onUpdateProgress,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const sourceUrlRef = useRef<string | null>(null);
+  const lastSavedTimeRef = useRef<number>(0);
   const [isPaused, setIsPaused] = useState(true);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -28,6 +31,7 @@ export function VideoPlayer({
 
   const SEEK_TIME = 10;
   const VOLUME_STEP = 0.1;
+  const SAVE_INTERVAL = 10; // Minimum seconds between saves
 
   const formatTime = (timeInSeconds: number) => {
     const minutes = Math.floor(timeInSeconds / 60);
@@ -42,10 +46,17 @@ export function VideoPlayer({
   }, []);
 
   const handleTimeUpdate = useCallback(() => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
+    if (!videoRef.current) return;
+
+    const currentSeconds = Math.floor(videoRef.current.currentTime);
+    setCurrentTime(currentSeconds);
+
+    // Check if enough time has passed since last save
+    if (currentSeconds - lastSavedTimeRef.current >= SAVE_INTERVAL) {
+      onUpdateProgress(currentSeconds);
+      lastSavedTimeRef.current = currentSeconds;
     }
-  }, []);
+  }, [onUpdateProgress]);
 
   const handleDurationChange = useCallback(() => {
     if (videoRef.current) {
@@ -68,6 +79,7 @@ export function VideoPlayer({
     }
   }, []);
 
+  // Rest of the component remains the same...
   const shouldIgnoreKeyboardControls = useCallback(() => {
     const activeElement = document.activeElement;
     if (!activeElement) return false;
@@ -214,15 +226,12 @@ export function VideoPlayer({
       return;
     }
 
-    // Skip initialization if we're already playing this source
     if (sourceUrlRef.current === selectedSource.url && hlsRef.current) {
       console.log("Source already initialized, skipping...");
       return;
     }
 
     console.log("Initializing new source:", selectedSource.url);
-
-    // Clean up existing instance
     cleanupHls();
 
     const initializeHls = () => {
@@ -286,7 +295,6 @@ export function VideoPlayer({
       }
     };
 
-    // Initialize with a slight delay to avoid race conditions
     const timeoutId = setTimeout(initializeHls, 0);
 
     return () => {
@@ -318,19 +326,7 @@ export function VideoPlayer({
             <div
               className={`relative rounded-lg overflow-hidden
               ${isFullscreen ? "w-48 h-72" : "w-32 h-48"}`}
-            >
-              {/* <Image
-                src={animeCover}
-                alt={animeTitle}
-                fill
-                className="object-cover"
-                sizes={
-                  isFullscreen
-                    ? "(max-width: 192px) 100vw, 192px"
-                    : "(max-width: 128px) 100vw, 128px"
-                }
-              /> */}
-            </div>
+            ></div>
 
             <div className="text-white">
               <h2

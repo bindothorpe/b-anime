@@ -46,6 +46,7 @@ export function useWatchData() {
               id: episodeId,
               secondsWatched: 0,
               watched: true,
+              updatedAt: new Date().toISOString(),
             },
           ],
         });
@@ -58,10 +59,13 @@ export function useWatchData() {
             id: episodeId,
             secondsWatched: 0,
             watched: true,
+            updatedAt: new Date().toISOString(),
           });
         } else {
           // Both exist - update watched status
           newData.anime[animeIndex].episodes[episodeIndex].watched = true;
+          newData.anime[animeIndex].episodes[episodeIndex].updatedAt =
+            new Date().toISOString();
         }
       }
 
@@ -83,7 +87,8 @@ export function useWatchData() {
             {
               id: episodeId,
               secondsWatched: seconds,
-              watched: false,
+              watched: true,
+              updatedAt: new Date().toISOString(),
             },
           ],
         });
@@ -95,7 +100,8 @@ export function useWatchData() {
           newData.anime[animeIndex].episodes.push({
             id: episodeId,
             secondsWatched: seconds,
-            watched: false,
+            watched: true,
+            updatedAt: new Date().toISOString(),
           });
         } else {
           // Both exist - update seconds if greater than current
@@ -104,6 +110,8 @@ export function useWatchData() {
           if (seconds > currentSeconds) {
             newData.anime[animeIndex].episodes[episodeIndex].secondsWatched =
               seconds;
+            newData.anime[animeIndex].episodes[episodeIndex].updatedAt =
+              new Date().toISOString();
           }
         }
       }
@@ -135,11 +143,23 @@ export function useWatchData() {
     [watchData, findAnimeAndEpisode]
   );
 
+  const getLastUpdated = React.useCallback(
+    (animeId: string, episodeId: string): string | null => {
+      const indexes = findAnimeAndEpisode(animeId, episodeId);
+      if (!indexes || indexes.episodeIndex === -1) return null;
+
+      const { animeIndex, episodeIndex } = indexes;
+      return watchData.anime[animeIndex].episodes[episodeIndex].updatedAt;
+    },
+    [watchData, findAnimeAndEpisode]
+  );
+
   return {
     watchData,
     markWatched,
     updateSecondsWatched,
     isWatched,
     getSecondsWatched,
+    getLastUpdated,
   };
 }
