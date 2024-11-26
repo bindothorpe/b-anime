@@ -14,15 +14,7 @@ import {
 import { CustomTabs } from "@/components/custom-tabs";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
-interface AnimeResult {
-  id: string;
-  title: string;
-  url: string;
-  image: string;
-  releaseDate: string;
-  subOrDub: string;
-}
+import AnimeResult from "@/types/anime-result";
 
 interface SearchResponse {
   currentPage: number;
