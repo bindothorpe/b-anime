@@ -27,13 +27,7 @@ export default function WatchPage() {
   const [infoLoading, setInfoLoading] = useState(true);
   const [sourceError, setSourceError] = useState<string | null>(null);
   const [infoError, setInfoError] = useState<string | null>(null);
-  const { markWatched, isWatched, updateSecondsWatched, updateDuration } =
-    useWatchData();
-
-  // Mark as watched once when the component mounts
-  useEffect(() => {
-    markWatched(animeId, episodeNumber);
-  }, [animeId, episodeNumber]); // Remove markWatched from dependencies
+  const { isWatched, updateSecondsWatched, updateDuration } = useWatchData();
 
   // Fetch episode source
   useEffect(() => {

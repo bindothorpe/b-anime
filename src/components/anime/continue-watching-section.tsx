@@ -6,6 +6,7 @@ import { ContinueWatchingCard } from "./continue-watching-card";
 import AnimeResult from "@/types/anime-result";
 import { Skeleton } from "../ui/skeleton";
 import { Card, CardHeader } from "../ui/card";
+import { useWatchData } from "@/hooks/use-watch-data";
 
 interface ContinueWatchingResult {
   animeId: string;
@@ -42,9 +43,12 @@ function ContinueWatchingCardSkeleton() {
 export function ContinueWatchingSection() {
   const [results, setResults] = useState<ContinueWatchingResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refresh, setRefresh] = useState(0);
+  const { deleteAnime } = useWatchData();
 
   useEffect(() => {
     const fetchContinueWatching = async () => {
+      setIsLoading(true);
       try {
         // Get watch data from localStorage
         const watchData = ls.get<WatchData>(STORAGE_KEY) || { anime: [] };
@@ -66,7 +70,10 @@ export function ContinueWatchingSection() {
               (latestEpisode.secondsWatched / latestEpisode.duration) * 100; // Assuming average episode length is 24 minutes
 
             // Only include if progress is between 10% and 90%
-            if (progress < 10 || progress > 90) return null;
+            if (latestEpisode.secondsWatched <= 5) return null;
+
+            if (latestEpisode.secondsWatched >= latestEpisode.duration - 5)
+              return null;
 
             // Fetch anime details
             try {
@@ -113,7 +120,7 @@ export function ContinueWatchingSection() {
     };
 
     fetchContinueWatching();
-  }, []);
+  }, [refresh]);
 
   if (isLoading) {
     return (
@@ -157,7 +164,14 @@ export function ContinueWatchingSection() {
                 key={item.animeId}
                 className="w-[294px] md:w-[232px] lg:w-[234px] xl:w-[234px] max-xl:[284px] flex-shrink-0"
               >
-                <ContinueWatchingCard id={item.animeId} {...item} />
+                <ContinueWatchingCard
+                  id={item.animeId}
+                  {...item}
+                  onDelete={() => {
+                    deleteAnime(item.animeId);
+                    setRefresh((prev) => prev + 1);
+                  }}
+                />
               </div>
             ))}
             {results.length === MAX_ITEMS && (
