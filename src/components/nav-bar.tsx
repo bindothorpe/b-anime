@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { SearchBar } from "./search-bar";
-import { Home, Bookmark, Menu, PlaySquare } from "lucide-react";
+import { Home, Menu, PlaySquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
