@@ -181,14 +181,9 @@ export default function VideoControls({
       {isPaused && (
         <div className="absolute inset-0 bg-black/60 pointer-events-none hidden md:block">
           <div
-            className={`absolute flex items-center gap-6 p-6 rounded-lg pointer-events-auto
-              ${isFullscreen ? "top-12 left-12" : "top-8 left-8"}`}
+            className={`absolute flex items-center rounded-lg pointer-events-auto
+              ${isFullscreen ? "top-8 left-8" : "top-8 left-8"}`}
           >
-            <div
-              className={`relative rounded-lg overflow-hidden
-              ${isFullscreen ? "w-48 h-72" : "w-32 h-48"}`}
-            ></div>
-
             <div className="text-white">
               <h2
                 className={`font-bold mb-2 ${
