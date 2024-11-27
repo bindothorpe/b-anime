@@ -42,15 +42,10 @@ export function ContinueWatchingCard({
     return (
       <Link href="/continue-watching">
         <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
-          <div className="aspect-[3/4] relative bg-muted flex flex-col items-center justify-center gap-2">
+          <div className="h-full relative hover:bg-muted flex items-center justify-center gap-2 transition-colors">
             <span className="text-base md:text-lg font-medium">Show all</span>
             <ChevronRight className="w-6 h-6" />
           </div>
-          <CardHeader className="p-4 invisible">
-            <CardTitle className="text-base h-12 line-clamp-2">
-              Placeholder
-            </CardTitle>
-          </CardHeader>
         </Card>
       </Link>
     );
