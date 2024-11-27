@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { SearchBar } from "./search-bar";
-import { Home, Bookmark, Menu } from "lucide-react";
+import { Home, Bookmark, Menu, PlaySquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -41,8 +41,8 @@ export function NavBar() {
                   href="/saved"
                   className="flex items-center gap-2 hover:text-primary transition-colors"
                 >
-                  <Bookmark className="h-4 w-4" />
-                  <span>Saved</span>
+                  <PlaySquare className="h-4 w-4" />
+                  <span>Continue Watching</span>
                 </Link>
               </div>
             </SheetContent>
@@ -64,11 +64,11 @@ export function NavBar() {
             <span>Home</span>
           </Link>
           <Link
-            href="/saved"
+            href="/continue-watching"
             className="flex items-center gap-2 hover:text-primary transition-colors"
           >
-            <Bookmark className="h-4 w-4" />
-            <span>Saved</span>
+            <PlaySquare className="h-4 w-4" />
+            <span>Continue Watching</span>
           </Link>
         </div>
 

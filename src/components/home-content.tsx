@@ -14,7 +14,7 @@ import {
 import { CustomTabs } from "@/components/custom-tabs";
 import { Button } from "./ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { ContinueWatchingSection } from "./anime/continue-watching-section";
+import { ContinueWatchingSection } from "./anime/continue-watching/continue-watching-section";
 
 interface EpisodeResult {
   id: string;
