@@ -8,7 +8,6 @@ import { WatchData } from "@/types/watch-data";
 import * as ls from "local-storage";
 import AnimeResult from "@/types/anime-result";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "anime_watch_data";
 
