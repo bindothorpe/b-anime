@@ -1,9 +1,11 @@
+// VideoPlayer.tsx
 "use client";
 
 import { useRef, useCallback, useEffect, useState } from "react";
 import Hls, { Events, ErrorTypes } from "hls.js";
 import { HlsError, EpisodeSource } from "@/types/anime";
 import * as ls from "local-storage";
+import VideoControls from "./video-controls";
 
 interface VideoPlayerProps {
   source: EpisodeSource;
@@ -37,18 +39,8 @@ export function VideoPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const SEEK_TIME = 10;
-  const VOLUME_STEP = 0.1;
   const SAVE_INTERVAL = 10; // Minimum seconds between saves
   const STORAGE_KEY = "anime_watch_data";
-
-  const formatTime = (timeInSeconds: number) => {
-    const minutes = Math.floor(timeInSeconds / 60);
-    const seconds = Math.floor(timeInSeconds % 60);
-    return `${minutes.toString().padStart(2, "0")}:${seconds
-      .toString()
-      .padStart(2, "0")}`;
-  };
 
   const getStoredTime = useCallback(() => {
     const watchData = ls.get<{
@@ -75,7 +67,6 @@ export function VideoPlayer({
 
     const storedTime = getStoredTime();
     if (storedTime > 10) {
-      // Seek to 10 seconds before the stored time
       videoRef.current.currentTime = Math.max(0, storedTime - 10);
       initialSeekPerformed.current = true;
     }
@@ -91,7 +82,6 @@ export function VideoPlayer({
     const currentSeconds = Math.floor(videoRef.current.currentTime);
     setCurrentTime(currentSeconds);
 
-    // Check if enough time has passed since last save
     if (currentSeconds - lastSavedTimeRef.current >= SAVE_INTERVAL) {
       onUpdateProgress(currentSeconds);
       lastSavedTimeRef.current = currentSeconds;
@@ -102,10 +92,9 @@ export function VideoPlayer({
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
       onDurationFound(videoRef.current.duration);
-      // Try to seek to stored time when duration becomes available
       seekToStoredTime();
     }
-  }, [seekToStoredTime]);
+  }, [onDurationFound, seekToStoredTime]);
 
   const handlePlayPause = useCallback(() => {
     if (videoRef.current) {
@@ -122,123 +111,12 @@ export function VideoPlayer({
     }
   }, []);
 
-  const shouldIgnoreKeyboardControls = useCallback(() => {
-    const activeElement = document.activeElement;
-    if (!activeElement) return false;
-
-    return (
-      activeElement.tagName === "INPUT" ||
-      activeElement.tagName === "TEXTAREA" ||
-      activeElement.getAttribute("contenteditable") === "true" ||
-      activeElement.closest('input, textarea, [contenteditable="true"]') !==
-        null ||
-      activeElement.getAttribute("role") === "searchbox" ||
-      activeElement.getAttribute("role") === "textbox"
-    );
-  }, []);
-
-  const toggleFullscreen = useCallback(async () => {
-    if (!containerRef.current) return;
-
-    try {
-      if (!document.fullscreenElement) {
-        await containerRef.current.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
-      }
-    } catch (error) {
-      console.error("Error toggling fullscreen:", error);
-    }
-  }, []);
-
-  const toggleMute = useCallback(() => {
-    if (!videoRef.current) return;
-    videoRef.current.muted = !videoRef.current.muted;
-  }, []);
-
-  const handleKeyPress = useCallback(
-    (event: KeyboardEvent) => {
-      const video = videoRef.current;
-      if (!video || shouldIgnoreKeyboardControls()) return;
-
-      const isVideoFocused =
-        document.activeElement === video ||
-        document.activeElement?.tagName === "VIDEO" ||
-        video.contains(document.activeElement);
-
-      if (isVideoFocused && event.code === "Space") {
-        return;
-      }
-
-      if (
-        [
-          "Space",
-          "ArrowLeft",
-          "ArrowRight",
-          "ArrowUp",
-          "ArrowDown",
-          "KeyF",
-          "KeyM",
-        ].includes(event.code)
-      ) {
-        event.preventDefault();
-      }
-
-      switch (event.code) {
-        case "Space":
-          if (video.paused) {
-            video.play().catch(console.error);
-          } else {
-            video.pause();
-          }
-          handlePlayPause();
-          break;
-
-        case "ArrowLeft":
-          video.currentTime = Math.max(0, video.currentTime - SEEK_TIME);
-          break;
-
-        case "ArrowRight":
-          video.currentTime = Math.min(
-            video.duration,
-            video.currentTime + SEEK_TIME
-          );
-          break;
-
-        case "ArrowUp":
-          video.volume = Math.min(1, video.volume + VOLUME_STEP);
-          break;
-
-        case "ArrowDown":
-          video.volume = Math.max(0, video.volume - VOLUME_STEP);
-          break;
-
-        case "KeyF":
-          toggleFullscreen();
-          break;
-
-        case "KeyM":
-          toggleMute();
-          break;
-      }
-    },
-    [
-      shouldIgnoreKeyboardControls,
-      toggleFullscreen,
-      toggleMute,
-      handlePlayPause,
-    ]
-  );
-
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyPress);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-
     return () => {
-      window.removeEventListener("keydown", handleKeyPress);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, [handleKeyPress, handleFullscreenChange]);
+  }, [handleFullscreenChange]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -357,45 +235,35 @@ export function VideoPlayer({
         className="w-full h-full focus-visible:outline-none"
         controls
         playsInline
+        onKeyDown={(e) => {
+          // Prevent default keyboard behavior
+          if (
+            [
+              "Space",
+              "ArrowLeft",
+              "ArrowRight",
+              "ArrowUp",
+              "ArrowDown",
+              "KeyF",
+              "KeyM",
+            ].includes(e.code)
+          ) {
+            e.preventDefault();
+          }
+        }}
       />
 
-      {isPaused && (
-        <div className="absolute inset-0 bg-black/60 pointer-events-none hidden md:block">
-          <div
-            className={`absolute flex items-center gap-6 p-6 rounded-lg pointer-events-auto
-              ${isFullscreen ? "top-12 left-12" : "top-8 left-8"}`}
-          >
-            <div
-              className={`relative rounded-lg overflow-hidden
-              ${isFullscreen ? "w-48 h-72" : "w-32 h-48"}`}
-            ></div>
-
-            <div className="text-white">
-              <h2
-                className={`font-bold mb-2 ${
-                  isFullscreen ? "text-4xl" : "text-2xl"
-                }`}
-              >
-                {animeTitle}
-              </h2>
-              <p
-                className={`opacity-90 ${
-                  isFullscreen ? "text-2xl" : "text-lg"
-                }`}
-              >
-                Episode {episodeNumber}
-              </p>
-              <p
-                className={`opacity-75 mt-2 ${
-                  isFullscreen ? "text-lg" : "text-sm"
-                }`}
-              >
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <VideoControls
+        videoRef={videoRef}
+        containerRef={containerRef}
+        isPaused={isPaused}
+        duration={duration}
+        currentTime={currentTime}
+        isFullscreen={isFullscreen}
+        animeTitle={animeTitle}
+        episodeNumber={episodeNumber}
+        onPlayPause={handlePlayPause}
+      />
     </div>
   );
 }
