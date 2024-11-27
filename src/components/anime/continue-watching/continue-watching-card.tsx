@@ -57,7 +57,7 @@ export function ContinueWatchingCard({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-2 right-2 z-[999] opacity-100 group-hover:opacity-100 hover:bg-destructive/90 hover:text-destructive-foreground transition-all bg-background/75"
+          className="absolute top-2 right-2 z-40 opacity-100 group-hover:opacity-100 hover:bg-destructive/90 hover:text-destructive-foreground transition-all bg-background/75"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
