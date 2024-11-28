@@ -2,6 +2,7 @@
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { NavBar } from "@/components/nav-bar";
+import Footer from "@/components/footer";
 
 export default function RootLayout({
   children,
@@ -20,6 +21,9 @@ export default function RootLayout({
 
             {/* Main Content with padding for navbar */}
             <main className="flex-grow pt-16">{children}</main>
+
+            {/* Footer */}
+            <Footer />
           </div>
         </Providers>
       </body>
