@@ -2,7 +2,6 @@
 "use client";
 
 import Link from "next/link";
-import { SearchBar } from "./search-bar";
 import { Home, Menu, PlaySquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { SearchBar } from "./zoro/search-bar";
 
 export function NavBar() {
   return (
