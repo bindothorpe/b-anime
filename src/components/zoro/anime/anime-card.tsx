@@ -6,7 +6,7 @@ import { Result } from "@/types/zoro/search-response";
 
 export function AnimeCard(result: Result) {
   return (
-    <Link href={`/anime/${result.id}`}>
+    <Link href={`/zoro/anime/${result.id}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
         <div className="aspect-[3/4] relative">
           <Image
