@@ -105,7 +105,6 @@ export function VideoPlayer({
 
   const cleanupHls = useCallback(() => {
     if (hlsRef.current) {
-      console.log("Cleaning up HLS instance");
       hlsRef.current.destroy();
       hlsRef.current = null;
       sourceUrlRef.current = null;
@@ -151,8 +150,6 @@ export function VideoPlayer({
       return;
     }
 
-    console.log("Initializing new source:", selectedSource.url);
-    console.log(selectedSource.url);
     cleanupHls();
 
     const initializeHls = () => {

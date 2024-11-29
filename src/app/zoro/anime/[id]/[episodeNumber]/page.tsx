@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { EpisodeNavigation } from "@/components/anime/stream/episode-navigation";
 import { EpisodeBreadcrumb } from "@/components/anime/stream/episode-breadcrumb";
 import { useWatchData } from "@/hooks/use-watch-data";
-import EpisodeButtonGrid from "@/components/anime/episode-button-grid";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimeInfo, Episode } from "@/types/zoro/anime-info";
 import { EpisodeSource, SourceResponse } from "@/types/zoro/source-response";
 import { VideoPlayer } from "@/components/zoro/anime/stream/video-player";
+import EpisodeButtonGrid from "@/components/zoro/anime/episode-button-grid";
 
 export default function WatchPage() {
   const params = useParams();
@@ -45,7 +45,6 @@ export default function WatchPage() {
 
         const data: SourceResponse = await response.json();
         setSource(data.sources[0]);
-        console.log(data.sources[0]);
       } catch (error) {
         console.error("Error fetching episode:", error);
         setSourceError(
@@ -190,11 +189,9 @@ export default function WatchPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Episodes</h3>
                   <EpisodeButtonGrid
-                    episodeButtonProps={animeInfo.episodes.map((episode) => ({
-                      animeId: animeId,
-                      episodeNumber: episode.number.toString(),
-                      isWatched: isWatched,
-                    }))}
+                    animeId={animeId}
+                    episodes={animeInfo.episodes}
+                    isWatched={isWatched}
                   />
                 </div>
               </>
