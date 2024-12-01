@@ -18,7 +18,6 @@ import { notifications } from "@/config/notificaions";
 export function NavBar() {
   return (
     <>
-      <NotificationBanner notifications={notifications} />
       <nav className="border-b bg-background">
         <div className="flex h-16 items-center px-4 sm:px-6">
           {/* Mobile Menu */}
@@ -84,6 +83,7 @@ export function NavBar() {
           </div>
         </div>
       </nav>
+      <NotificationBanner notifications={notifications} />
     </>
   );
 }

@@ -2,7 +2,6 @@ import React from "react";
 import { X } from "lucide-react";
 import Link from "next/link";
 import { Notification } from "@/types/notifications";
-import { Alert, AlertDescription } from "../ui/alert";
 
 // Hook to manage dismissed notifications
 const useDismissedNotifications = () => {

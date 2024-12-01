@@ -6,8 +6,8 @@ export const notifications: Notification[] = [
     message:
       "✨ New! Banners are here to announce new features and updates.",
     variant: "default",
-    startDate: "2024-01-01",
-    endDate: "2024-12-31",
+    startDate: "2024-12-01",
+    endDate: "2024-12-8",
     dismissible: true,
   },
   {
