@@ -4,8 +4,7 @@ export const notifications: Notification[] = [
   {
     id: "new-feature-2024",
     message:
-      "✨ New! Banners are here—your new go-to pattern for important announcements",
-    
+      "✨ New! Banners are here to announce new features and updates.",
     variant: "default",
     startDate: "2024-01-01",
     endDate: "2024-12-31",
