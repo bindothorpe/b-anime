@@ -1,7 +1,7 @@
 // components/anime/stream/episode-navigation.tsx
 
 import { Button } from "@/components/ui/button";
-import { AnimeInfo, Episode } from "@/types/zoro/anime-info";
+import { AnimeInfo } from "@/types/zoro/anime-info";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback } from "react";
 

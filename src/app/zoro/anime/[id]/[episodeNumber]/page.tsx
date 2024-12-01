@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useWatchData } from "@/hooks/use-watch-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimeInfo, Episode } from "@/types/zoro/anime-info";
-import { SourceResponse, SubtitleSource } from "@/types/zoro/source-response";
+import { SourceResponse } from "@/types/zoro/source-response";
 import { VideoPlayer } from "@/components/zoro/anime/stream/video-player";
 import EpisodeButtonGrid from "@/components/zoro/anime/episode-button-grid";
 import { EpisodeNavigation } from "@/components/zoro/anime/stream/episode-navigation";
@@ -72,7 +72,7 @@ export default function WatchPage() {
         setInfoError(response.error ? response.error.message : "Unknown error");
       } else {
         setAnimeInfo(response.data);
-        const episode = response.data.episodes.find(
+        const episode = response.data?.episodes.find(
           (e) => e.number === Number(episodeNumber)
         ) as Episode | undefined;
         if (!episode) {

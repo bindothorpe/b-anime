@@ -5,7 +5,7 @@ import { SourceResponse } from "@/types/zoro/source-response";
 import * as React from "react";
 
 export interface ZoroResponse<T> {
-  data: T;
+  data: T | null;
   error: Error | null;
   hasError: boolean;
 }

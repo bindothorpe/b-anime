@@ -3,7 +3,6 @@ import { ANIME } from '@consumet/extensions';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   
-  const type = Number(searchParams.get('type')) || 1;
   const page = Number(searchParams.get('page')) || 1;
 
   const zoro = new ANIME.Zoro();

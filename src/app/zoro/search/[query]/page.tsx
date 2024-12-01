@@ -15,7 +15,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SearchResponse } from "@/types/zoro/search-response";
 import { AnimeGrid } from "@/components/zoro/anime/anime-grid";
 import { useZoro } from "@/hooks/use-zoro";
-import { set } from "local-storage";
 
 export default function SearchPage() {
   const params = useParams();

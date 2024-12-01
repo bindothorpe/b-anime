@@ -13,11 +13,9 @@ import {
 import { CustomTabs } from "@/components/custom-tabs";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "../ui/button";
-import RecentResponse from "@/types/zoro/recent-response";
 import AnimeResponse from "@/types/zoro/anime-response";
 import { RecentEpisodesGrid } from "./anime/recent-episodes/recent-episodes-grid";
 import { ContinueWatchingSection } from "./anime/continue-watching/continue-wartching-section";
-import { get } from "http";
 import { useZoro } from "@/hooks/use-zoro";
 // import { ContinueWatchingSection } from "./anime/continue-watching/continue-watching-section";
 
@@ -46,8 +44,10 @@ export default function HomeContent() {
       if (response.hasError) {
         console.error("Search error:", response.error);
       } else {
-        setResults(response.data.results);
-        setHasNextPage(response.data.hasNextPage);
+        if (response.data) {
+          setResults(response.data.results);
+          setHasNextPage(response.data.hasNextPage);
+        }
       }
 
       setIsLoading(false);

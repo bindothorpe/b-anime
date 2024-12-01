@@ -1,9 +1,9 @@
 import { AnimeCardSkeleton } from "@/components/anime/anime-card-skeleton";
-import { Result } from "@/types/zoro/search-response";
 import { AnimeCard } from "./anime-card";
+import AnimeResponse from "@/types/zoro/anime-response";
 
 interface AnimeGridProps {
-  results: Result[];
+  results: AnimeResponse[];
   isLoading?: boolean;
 }
 

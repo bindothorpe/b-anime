@@ -1,10 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Result } from "@/types/zoro/search-response";
+import AnimeResponse from "@/types/zoro/anime-response";
 
-export function AnimeCard(result: Result) {
+export function AnimeCard(result: AnimeResponse) {
   return (
     <Link href={`/zoro/anime/${result.id}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">

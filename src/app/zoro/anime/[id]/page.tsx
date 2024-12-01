@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useWatchData } from "@/hooks/use-watch-data";
 import { AnimeInfo } from "@/types/zoro/anime-info";
 import EpisodeButtonGrid from "@/components/zoro/anime/episode-button-grid";
-import { useZoro, ZoroResponse } from "@/hooks/use-zoro";
+import { useZoro } from "@/hooks/use-zoro";
 
 export default function AnimePage() {
   const params = useParams();

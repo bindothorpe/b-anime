@@ -5,10 +5,8 @@ import { useEffect, useState } from "react";
 import { WatchData } from "@/types/watch-data";
 import * as ls from "local-storage";
 import Link from "next/link";
-import AnimeResponse from "@/types/zoro/anime-response";
 import { ContinueWatchingCard } from "./continue-watching-card";
 import ContinueWatchingCardSkeleton from "./continue-watching-card-skeleton";
-import AnimeResult from "@/types/anime-result";
 import { useZoro } from "@/hooks/use-zoro";
 
 const STORAGE_KEY = "anime_watch_data";
@@ -63,8 +61,8 @@ export default function ContinueWatchingGrid() {
               animeId: anime.id,
               episodeId: latestEpisode.id,
               episodeNumber: parseInt(latestEpisode.id.split("-").pop() || "1"),
-              title: animeInfo.title,
-              image: animeInfo.image,
+              title: animeInfo?.title,
+              image: animeInfo?.image,
               progress,
               updatedAt: latestEpisode.updatedAt,
             };
