@@ -37,7 +37,7 @@ export default function SearchPage() {
       if (response.hasError) {
         console.error("Search error:", response.error);
       } else {
-        setSearchResponse(response.data);
+        setSearchResponse(response.data ? response.data : undefined);
       }
 
       setIsLoading(false);
