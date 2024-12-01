@@ -14,8 +14,6 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const server = searchParams.get('server') as StreamingServers || StreamingServers.VidCloud;
 
-    console.log('Fetching episode:', episodeId, 'from server:', server); // Debug log
-
     const zoro = new ANIME.Zoro();
     
     const data = await zoro.fetchEpisodeSources(episodeId, server);
@@ -29,9 +27,10 @@ export async function GET(
     }));
 
     return Response.json({
-      headers: data.headers,
       sources,
-      download: data.download
+      subtitles: data.subtitles,
+      intro: data.intro,
+      outro: data.outro
     });
   } catch (error) {
     console.error('Error in watch route:', error);

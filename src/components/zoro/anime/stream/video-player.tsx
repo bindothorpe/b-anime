@@ -6,10 +6,10 @@ import Hls, { Events, ErrorTypes } from "hls.js";
 import { HlsError } from "@/types/anime";
 import * as ls from "local-storage";
 import VideoControls from "@/components/anime/stream/video-controls";
-import { EpisodeSource } from "@/types/zoro/source-response";
+import { EpisodeSource, SourceResponse } from "@/types/zoro/source-response";
 
 interface VideoPlayerProps {
-  source: EpisodeSource;
+  sourceResponse: SourceResponse;
   onError: (error: string) => void;
   animeTitle: string | undefined;
   episodeNumber: string | number;
@@ -20,7 +20,7 @@ interface VideoPlayerProps {
 }
 
 export function VideoPlayer({
-  source,
+  sourceResponse,
   onError,
   animeTitle,
   episodeNumber,
@@ -42,6 +42,8 @@ export function VideoPlayer({
 
   const SAVE_INTERVAL = 10; // Minimum seconds between saves
   const STORAGE_KEY = "anime_watch_data";
+
+  const source = sourceResponse.sources[0];
 
   const getStoredTime = useCallback(() => {
     const watchData = ls.get<{

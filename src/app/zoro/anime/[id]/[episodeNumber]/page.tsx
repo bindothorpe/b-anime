@@ -23,7 +23,9 @@ export default function WatchPage() {
   const [animeInfo, setAnimeInfo] = useState<AnimeInfo | null>(null);
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [episodeId, setEpisodeId] = useState<string | null>(null);
-  const [source, setSource] = useState<EpisodeSource | null>(null);
+  const [sourceResponse, setSourceResponse] = useState<SourceResponse | null>(
+    null
+  );
   const [sourceLoading, setSourceLoading] = useState(true);
   const [infoLoading, setInfoLoading] = useState(true);
   const [sourceError, setSourceError] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export default function WatchPage() {
         }
 
         const data: SourceResponse = await response.json();
-        setSource(data.sources[0]);
+        setSourceResponse(data);
       } catch (error) {
         console.error("Error fetching episode:", error);
         setSourceError(
@@ -140,9 +142,9 @@ export default function WatchPage() {
         <CardContent>
           {sourceLoading ? (
             <Skeleton className="aspect-video" />
-          ) : source ? (
+          ) : sourceResponse ? (
             <VideoPlayer
-              source={source}
+              sourceResponse={sourceResponse}
               onError={setSourceError}
               animeTitle={animeInfo?.title || "Loading..."}
               episodeNumber={episodeNumber}
