@@ -9,6 +9,7 @@ import AnimeResponse from "@/types/zoro/anime-response";
 import { ContinueWatchingCard } from "./continue-watching-card";
 import ContinueWatchingCardSkeleton from "./continue-watching-card-skeleton";
 import AnimeResult from "@/types/anime-result";
+import { useZoro } from "@/hooks/use-zoro";
 
 const STORAGE_KEY = "anime_watch_data";
 
@@ -17,6 +18,7 @@ export default function ContinueWatchingGrid() {
   const [isLoading, setIsLoading] = useState(true);
   const [refresh, setRefresh] = useState(0);
   const { deleteAnime } = useWatchData();
+  const { getAnimeInfo } = useZoro();
 
   useEffect(() => {
     const fetchContinueWatching = async () => {
@@ -48,28 +50,24 @@ export default function ContinueWatchingGrid() {
               return null;
 
             // Fetch anime details
-            try {
-              const response = await fetch(`/api/zoro/anime/${anime.id}`);
-              const responseJson = await response.json();
-              const animeDetails: AnimeResult = responseJson.results.filter(
-                (animeResult: AnimeResult) => animeResult.id === anime.id
-              )[0];
+            const response = await getAnimeInfo(anime.id);
 
-              return {
-                animeId: anime.id,
-                episodeId: latestEpisode.id,
-                episodeNumber: parseInt(
-                  latestEpisode.id.split("-").pop() || "1"
-                ),
-                title: animeDetails.title,
-                image: animeDetails.image,
-                progress,
-                updatedAt: latestEpisode.updatedAt,
-              };
-            } catch (error) {
-              console.error("Error fetching anime details:", error);
+            if (response.hasError) {
+              console.error(response.error);
               return null;
             }
+
+            const animeInfo = response.data;
+
+            return {
+              animeId: anime.id,
+              episodeId: latestEpisode.id,
+              episodeNumber: parseInt(latestEpisode.id.split("-").pop() || "1"),
+              title: animeInfo.title,
+              image: animeInfo.image,
+              progress,
+              updatedAt: latestEpisode.updatedAt,
+            };
           })
         );
 
