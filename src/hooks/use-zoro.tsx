@@ -66,14 +66,9 @@ export function useZoro() {
   );
 
   const getRecentlyUpdated = React.useCallback(
-    async (
-      page: number = 1,
-      type: number = 1
-    ): Promise<ZoroResponse<RecentResponse>> => {
+    async (page: number = 1): Promise<ZoroResponse<RecentResponse>> => {
       try {
-        const response = await fetch(
-          `/api/zoro/anime/recent?page=${page}&type=${type}`
-        );
+        const response = await fetch(`/api/zoro/anime/recent?page=${page}`);
         const data = await response.json();
 
         return {
