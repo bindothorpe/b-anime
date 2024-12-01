@@ -43,8 +43,6 @@ export function VideoPlayer({
   const SAVE_INTERVAL = 10; // Minimum seconds between saves
   const STORAGE_KEY = "anime_watch_data";
 
-  const source = sourceResponse.sources[0];
-
   const getStoredTime = useCallback(() => {
     const watchData = ls.get<{
       anime: Array<{
@@ -138,9 +136,9 @@ export function VideoPlayer({
   }, [handlePlayPause, handleTimeUpdate, handleDurationChange]);
 
   useEffect(() => {
-    if (!source || !videoRef.current) return;
+    if (!sourceResponse.sources[0] || !videoRef.current) return;
 
-    const selectedSource = source;
+    const selectedSource = sourceResponse.sources[0];
 
     if (!selectedSource) {
       onError("No valid video source found");
@@ -223,7 +221,7 @@ export function VideoPlayer({
         cleanupHls();
       }
     };
-  }, [source, cleanupHls, onError]);
+  }, [sourceResponse, cleanupHls, onError]);
 
   return (
     <div
