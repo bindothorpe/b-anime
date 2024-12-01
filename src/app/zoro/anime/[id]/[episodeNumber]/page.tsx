@@ -12,6 +12,7 @@ import { VideoPlayer } from "@/components/zoro/anime/stream/video-player";
 import EpisodeButtonGrid from "@/components/zoro/anime/episode-button-grid";
 import { EpisodeNavigation } from "@/components/zoro/anime/stream/episode-navigation";
 import { EpisodeBreadcrumb } from "@/components/zoro/anime/stream/episode-breadcrumb";
+import { useZoro } from "@/hooks/use-zoro";
 
 export default function WatchPage() {
   const params = useParams();
@@ -31,50 +32,47 @@ export default function WatchPage() {
   const [sourceError, setSourceError] = useState<string | null>(null);
   const [infoError, setInfoError] = useState<string | null>(null);
   const { isWatched, updateSecondsWatched, updateDuration } = useWatchData();
+  const { getEpisodeSource, getAnimeInfo } = useZoro();
 
   // Fetch episode source
   useEffect(() => {
     if (!episode) return;
+    if (!episodeId) return;
     const fetchEpisodeSource = async () => {
-      try {
-        setSourceLoading(true);
-        setSourceError(null);
+      setSourceLoading(true);
+      setSourceError(null);
 
-        const response = await fetch(`/api/zoro/anime/watch/${episodeId}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch episode source");
-        }
+      const response = await getEpisodeSource(episodeId);
 
-        const data: SourceResponse = await response.json();
-        setSourceResponse(data);
-      } catch (error) {
-        console.error("Error fetching episode:", error);
+      if (response.hasError) {
+        console.error(response.error);
         setSourceError(
-          error instanceof Error ? error.message : "Failed to load episode"
+          response.error ? response.error.message : "Unknown error"
         );
-      } finally {
-        setSourceLoading(false);
+      } else {
+        setSourceResponse(response.data);
       }
+
+      setSourceLoading(false);
     };
 
     fetchEpisodeSource();
-  }, [episode]);
+  }, [episode, episodeId]);
 
   // Fetch anime info
   useEffect(() => {
     const fetchAnimeInfo = async () => {
-      try {
-        setInfoLoading(true);
-        setInfoError(null);
+      setInfoLoading(true);
+      setInfoError(null);
 
-        const response = await fetch(`/api/zoro/anime/info/${animeId}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch anime info");
-        }
+      const response = await getAnimeInfo(animeId);
 
-        const data: AnimeInfo = await response.json();
-        setAnimeInfo(data);
-        const episode = data.episodes.find(
+      if (response.hasError) {
+        console.error(response.error);
+        setInfoError(response.error ? response.error.message : "Unknown error");
+      } else {
+        setAnimeInfo(response.data);
+        const episode = response.data.episodes.find(
           (e) => e.number === Number(episodeNumber)
         ) as Episode | undefined;
         if (!episode) {
@@ -82,16 +80,9 @@ export default function WatchPage() {
         }
         setEpisodeId(episode.id);
         setEpisode(episode);
-      } catch (error) {
-        console.error("Error fetching anime info:", error);
-        setInfoError(
-          error instanceof Error
-            ? error.message
-            : "Failed to load anime information"
-        );
-      } finally {
-        setInfoLoading(false);
       }
+
+      setInfoLoading(false);
     };
 
     fetchAnimeInfo();
