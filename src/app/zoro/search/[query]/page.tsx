@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SearchResponse } from "@/types/zoro/search-response";
 import { AnimeGrid } from "@/components/zoro/anime/anime-grid";
+import { useZoro } from "@/hooks/use-zoro";
+import { set } from "local-storage";
 
 export default function SearchPage() {
   const params = useParams();
@@ -25,21 +27,21 @@ export default function SearchPage() {
 
   const [searchResponse, setSearchResponse] = useState<SearchResponse>();
   const [isLoading, setIsLoading] = useState(true);
+  const { searchAnime } = useZoro();
 
   useEffect(() => {
     const fetchResults = async () => {
       setIsLoading(true);
-      try {
-        const response = await fetch(
-          `/api/zoro/anime/${encodeURIComponent(query)}?page=${currentPage}`
-        );
-        const searchResponse: SearchResponse = await response.json();
-        setSearchResponse(searchResponse);
-      } catch (error) {
-        console.error("Search error:", error);
-      } finally {
-        setIsLoading(false);
+
+      const response = await searchAnime(query, currentPage);
+
+      if (response.hasError) {
+        console.error("Search error:", response.error);
+      } else {
+        setSearchResponse(response.data);
       }
+
+      setIsLoading(false);
     };
 
     fetchResults();
@@ -72,7 +74,7 @@ export default function SearchPage() {
         Search Results for &ldquo;{query.replaceAll("%20", " ")}&rdquo;
       </h1>
 
-      <div className="flex justify-between">
+      <div className="flex justify-end">
         {/* Top pagination */}
         <div className="pr-4 flex gap-2">
           <Button
