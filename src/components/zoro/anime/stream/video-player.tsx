@@ -6,7 +6,7 @@ import Hls, { Events, ErrorTypes } from "hls.js";
 import { HlsError } from "@/types/anime";
 import * as ls from "local-storage";
 import VideoControls from "@/components/anime/stream/video-controls";
-import { EpisodeSource, SourceResponse } from "@/types/zoro/source-response";
+import { SourceResponse } from "@/types/zoro/source-response";
 
 interface VideoPlayerProps {
   sourceResponse: SourceResponse;
