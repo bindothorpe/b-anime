@@ -2,7 +2,7 @@ import { Notification } from "@/types/notifications";
 
 export const notifications: Notification[] = [
   {
-    id: "new-feature-2024",
+    id: "new-feature-banners",
     message:
       "✨ New! Banners are here to announce new features and updates.",
     variant: "default",
