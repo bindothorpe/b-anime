@@ -17,6 +17,8 @@ import RecentResponse from "@/types/zoro/recent-response";
 import AnimeResponse from "@/types/zoro/anime-response";
 import { RecentEpisodesGrid } from "./anime/recent-episodes/recent-episodes-grid";
 import { ContinueWatchingSection } from "./anime/continue-watching/continue-wartching-section";
+import { get } from "http";
+import { useZoro } from "@/hooks/use-zoro";
 // import { ContinueWatchingSection } from "./anime/continue-watching/continue-watching-section";
 
 export default function HomeContent() {
@@ -28,6 +30,7 @@ export default function HomeContent() {
   const [results, setResults] = useState<AnimeResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasNextPage, setHasNextPage] = useState(false);
+  const { getRecentlyUpdated } = useZoro();
 
   const tabItems = {
     Sub: "1",
@@ -38,18 +41,16 @@ export default function HomeContent() {
   useEffect(() => {
     const fetchResults = async () => {
       setIsLoading(true);
-      try {
-        const response = await fetch(
-          `/api/zoro/anime/recent?page=${currentPage}`
-        );
-        const data: RecentResponse = await response.json();
-        setResults(data.results);
-        setHasNextPage(data.hasNextPage);
-      } catch (error) {
-        console.error("Search error:", error);
-      } finally {
-        setIsLoading(false);
+      const response = await getRecentlyUpdated(currentPage);
+
+      if (response.hasError) {
+        console.error("Search error:", response.error);
+      } else {
+        setResults(response.data.results);
+        setHasNextPage(response.data.hasNextPage);
       }
+
+      setIsLoading(false);
     };
 
     fetchResults();
