@@ -16,6 +16,7 @@ import { Button } from "../ui/button";
 import RecentResponse from "@/types/zoro/recent-response";
 import AnimeResponse from "@/types/zoro/anime-response";
 import { RecentEpisodesGrid } from "./anime/recent-episodes/recent-episodes-grid";
+import { ContinueWatchingSection } from "./anime/continue-watching/continue-wartching-section";
 // import { ContinueWatchingSection } from "./anime/continue-watching/continue-watching-section";
 
 export default function HomeContent() {
@@ -82,7 +83,7 @@ export default function HomeContent() {
 
   return (
     <div className="container mx-auto py-6">
-      {/* <ContinueWatchingSection /> */}
+      <ContinueWatchingSection />
       <h1 className="text-2xl font-bold mb-2 pl-4">Recent Episodes</h1>
 
       <div className="flex justify-between">
