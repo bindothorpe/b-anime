@@ -1,3 +1,5 @@
+// Definition: This file contains the types for the anime info command.
+// This is the return type of the fetch(`/api/zoro/anime/${id}`) call.
 export interface AnimeInfo {
     id: string;
     title: string;
