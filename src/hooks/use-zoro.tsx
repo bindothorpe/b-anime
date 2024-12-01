@@ -30,7 +30,7 @@ export function useZoro() {
         };
       } catch (error) {
         return {
-          data: null as any,
+          data: null,
           error:
             error instanceof Error ? error : new Error("Failed to fetch anime"),
           hasError: true,
@@ -53,7 +53,7 @@ export function useZoro() {
         };
       } catch (error) {
         return {
-          data: null as any,
+          data: null,
           error:
             error instanceof Error
               ? error
@@ -78,7 +78,7 @@ export function useZoro() {
         };
       } catch (error) {
         return {
-          data: null as any,
+          data: null,
           error:
             error instanceof Error
               ? error
@@ -103,7 +103,7 @@ export function useZoro() {
         };
       } catch (error) {
         return {
-          data: null as any,
+          data: null,
           error:
             error instanceof Error
               ? error

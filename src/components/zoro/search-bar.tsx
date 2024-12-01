@@ -5,13 +5,6 @@ import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import AnimeResult from "@/types/anime-result";
-
-interface SearchResponse {
-  currentPage: number;
-  hasNextPage: boolean;
-  results: AnimeResult[];
-}
 
 export function SearchBar() {
   const [searchQuery, setSearchQuery] = useState("");
