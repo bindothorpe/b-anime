@@ -1,5 +1,5 @@
+import HomeContent from "@/components/zoro/home-content";
 import { Suspense } from "react";
-import HomeContent from "@/components/home-content";
 
 export default function Home() {
   return (
