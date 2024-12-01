@@ -17,6 +17,7 @@ interface VideoPlayerProps {
   onDurationFound: (duration: number) => void;
   animeId: string;
   episodeId: string;
+  subtitleUrl: string | undefined;
 }
 
 export function VideoPlayer({
@@ -28,6 +29,7 @@ export function VideoPlayer({
   onDurationFound,
   animeId,
   episodeId,
+  subtitleUrl,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -39,6 +41,7 @@ export function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [subtitleContent, setSubtitleContent] = useState<string | null>(null);
 
   const SAVE_INTERVAL = 10; // Minimum seconds between saves
   const STORAGE_KEY = "anime_watch_data";
@@ -88,6 +91,81 @@ export function VideoPlayer({
       lastSavedTimeRef.current = currentSeconds;
     }
   }, [onUpdateProgress]);
+
+  const fetchSubtitles = useCallback(
+    async (url: string) => {
+      try {
+        // Option 1: Fetch through your backend proxy
+        const response = await fetch(
+          `/api/zoro/subtitles?url=${encodeURIComponent(url)}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch subtitles");
+        const vttContent = await response.text();
+        return vttContent;
+      } catch (error) {
+        console.error("Error fetching subtitles:", error);
+        onError("Failed to load subtitles");
+        return null;
+      }
+    },
+    [onError]
+  );
+
+  useEffect(() => {
+    // console.log("Starting to add subtitles");
+    const video = videoRef.current;
+    if (!video || !subtitleUrl) return;
+
+    // Remove existing tracks
+    while (video.firstChild) {
+      // console.log("Removing previous track");
+      video.removeChild(video.firstChild);
+    }
+
+    const loadSubtitles = async () => {
+      if (video.firstChild) {
+        // console.log("Already had track");
+        return;
+      }
+      const vttContent = await fetchSubtitles(subtitleUrl);
+      if (!vttContent) return;
+
+      // Create a blob URL for the subtitle content
+      const blob = new Blob([vttContent], { type: "text/vtt" });
+      const blobUrl = URL.createObjectURL(blob);
+
+      const track = document.createElement("track");
+      track.kind = "subtitles";
+      track.label = "English";
+      track.srclang = "en";
+      track.src = blobUrl;
+      track.default = true;
+
+      // console.log("Adding subtitles");
+      video.appendChild(track);
+
+      // Enable/disable based on state
+      const textTracks = video.textTracks[0];
+      if (textTracks) {
+        textTracks.mode = "showing";
+      }
+
+      // Store the blob URL to clean it up later
+      setSubtitleContent(blobUrl);
+    };
+
+    loadSubtitles();
+
+    return () => {
+      // Cleanup
+      while (video.firstChild) {
+        video.removeChild(video.firstChild);
+      }
+      if (subtitleContent) {
+        URL.revokeObjectURL(subtitleContent);
+      }
+    };
+  }, [subtitleUrl, fetchSubtitles]);
 
   const handleDurationChange = useCallback(() => {
     if (videoRef.current) {
