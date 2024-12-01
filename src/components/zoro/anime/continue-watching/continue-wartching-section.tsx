@@ -55,8 +55,6 @@ export function ContinueWatchingSection() {
                 (animeResult: AnimeResult) => animeResult.id === anime.id
               )[0];
 
-              console.log(animeDetails);
-
               return {
                 animeId: anime.id,
                 episodeId: latestEpisode.id,

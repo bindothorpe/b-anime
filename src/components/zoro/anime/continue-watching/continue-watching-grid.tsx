@@ -8,6 +8,7 @@ import Link from "next/link";
 import AnimeResponse from "@/types/zoro/anime-response";
 import { ContinueWatchingCard } from "./continue-watching-card";
 import ContinueWatchingCardSkeleton from "./continue-watching-card-skeleton";
+import AnimeResult from "@/types/anime-result";
 
 const STORAGE_KEY = "anime_watch_data";
 
@@ -38,7 +39,7 @@ export default function ContinueWatchingGrid() {
 
             // Calculate progress percentage
             const progress =
-              (latestEpisode.secondsWatched / latestEpisode.duration) * 100;
+              (latestEpisode.secondsWatched / latestEpisode.duration) * 100; // Assuming average episode length is 24 minutes
 
             // Only include if progress is between 10% and 90%
             if (latestEpisode.secondsWatched <= 5) return null;
@@ -50,8 +51,8 @@ export default function ContinueWatchingGrid() {
             try {
               const response = await fetch(`/api/zoro/anime/${anime.id}`);
               const responseJson = await response.json();
-              const animeDetails: AnimeResponse = responseJson.results.filter(
-                (animeResult: AnimeResponse) => animeResult.id === anime.id
+              const animeDetails: AnimeResult = responseJson.results.filter(
+                (animeResult: AnimeResult) => animeResult.id === anime.id
               )[0];
 
               return {

@@ -64,7 +64,7 @@ export function NavBar() {
             <span>Home</span>
           </Link>
           <Link
-            href="/continue-watching"
+            href="/zoro/continue-watching"
             className="flex items-center gap-2 hover:text-primary transition-colors"
           >
             <PlaySquare className="h-4 w-4" />
