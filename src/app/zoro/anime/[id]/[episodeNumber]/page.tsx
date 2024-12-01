@@ -4,7 +4,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { EpisodeBreadcrumb } from "@/components/anime/stream/episode-breadcrumb";
 import { useWatchData } from "@/hooks/use-watch-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimeInfo, Episode } from "@/types/zoro/anime-info";
@@ -12,6 +11,7 @@ import { SourceResponse } from "@/types/zoro/source-response";
 import { VideoPlayer } from "@/components/zoro/anime/stream/video-player";
 import EpisodeButtonGrid from "@/components/zoro/anime/episode-button-grid";
 import { EpisodeNavigation } from "@/components/zoro/anime/stream/episode-navigation";
+import { EpisodeBreadcrumb } from "@/components/zoro/anime/stream/episode-breadcrumb";
 
 export default function WatchPage() {
   const params = useParams();
@@ -130,12 +130,11 @@ export default function WatchPage() {
             {infoLoading ? (
               <Skeleton className="w-40 h-8" />
             ) : animeInfo ? (
-              // <EpisodeBreadcrumb
-              //   animeInfo={animeInfo}
-              //   episodeNumber={episodeNumber}
-              //   animeId={animeId}
-              // />
-              <></>
+              <EpisodeBreadcrumb
+                animeInfo={animeInfo}
+                episodeNumber={episodeNumber}
+                animeId={animeId}
+              />
             ) : null}
           </CardTitle>
         </CardHeader>
