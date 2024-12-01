@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useWatchData } from "@/hooks/use-watch-data";
 import { AnimeInfo } from "@/types/zoro/anime-info";
 import EpisodeButtonGrid from "@/components/zoro/anime/episode-button-grid";
+import { useZoro, ZoroResponse } from "@/hooks/use-zoro";
 
 export default function AnimePage() {
   const params = useParams();
@@ -17,18 +18,19 @@ export default function AnimePage() {
   const [animeInfo, setAnimeInfo] = useState<AnimeInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { isWatched } = useWatchData();
+  const { getAnimeInfo } = useZoro();
 
   useEffect(() => {
     const fetchAnimeInfo = async () => {
-      try {
-        const response = await fetch(`/api/zoro/anime/info/${id}`);
-        const data: AnimeInfo = await response.json();
-        setAnimeInfo(data);
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setIsLoading(false);
+      const response = await getAnimeInfo(id);
+
+      if (response.hasError) {
+        console.error(response.error);
+      } else {
+        setAnimeInfo(response.data);
       }
+
+      setIsLoading(false);
     };
 
     fetchAnimeInfo();
