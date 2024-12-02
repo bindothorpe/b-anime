@@ -61,7 +61,7 @@ export default function AnimePage() {
   }
 
   if (!animeInfo) {
-    return <div>Failed to load anime information.</div>;
+    return <div>Failed to load anime information</div>;
   }
 
   return (
