@@ -112,19 +112,19 @@ export function VideoPlayer({
   );
 
   useEffect(() => {
-    // console.log("Starting to add subtitles");
+    console.log("Starting to add subtitles");
     const video = videoRef.current;
     if (!video || !subtitleUrl) return;
 
     // Remove existing tracks
     while (video.firstChild) {
-      // console.log("Removing previous track");
+      console.log("Removing previous track");
       video.removeChild(video.firstChild);
     }
 
     const loadSubtitles = async () => {
       if (video.firstChild) {
-        // console.log("Already had track");
+        console.log("Already had track");
         return;
       }
       const vttContent = await fetchSubtitles(subtitleUrl);
@@ -141,7 +141,7 @@ export function VideoPlayer({
       track.src = blobUrl;
       track.default = true;
 
-      // console.log("Adding subtitles");
+      console.log("Adding subtitles");
       video.appendChild(track);
 
       // Enable/disable based on state
@@ -214,7 +214,7 @@ export function VideoPlayer({
   }, [handlePlayPause, handleTimeUpdate, handleDurationChange]);
 
   useEffect(() => {
-    if (!sourceResponse.sources[0] || !videoRef.current) return;
+    if (!sourceResponse?.sources?.[0] || !videoRef.current) return;
 
     const selectedSource = sourceResponse.sources[0];
 
