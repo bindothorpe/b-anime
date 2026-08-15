@@ -12,6 +12,15 @@ import { EpisodeSource, AnimeInfo } from "@/types/anime";
 import { useWatchData } from "@/hooks/use-watch-data";
 import EpisodeButtonGrid from "@/components/anime/episode-button-grid";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import * as ls from "@/lib/storage";
+
+// Per-anime preferred stream server, e.g. { "heavenly-delusion-884": "HD-2" }
+const PREFERRED_SERVER_KEY = "anime_preferred_server";
 
 export default function WatchPage() {
   const params = useParams();
@@ -27,34 +36,75 @@ export default function WatchPage() {
   const [infoLoading, setInfoLoading] = useState(true);
   const [sourceError, setSourceError] = useState<string | null>(null);
   const [infoError, setInfoError] = useState<string | null>(null);
+  // null = route default (first server); set when the user picks one
+  const [server, setServer] = useState<string | null>(null);
+  const [availableServers, setAvailableServers] = useState<string[]>([]);
   const { isWatched, updateSecondsWatched, updateDuration } = useWatchData();
 
   // Fetch episode source
   useEffect(() => {
+    let cancelled = false;
     const fetchEpisodeSource = async () => {
       try {
         setSourceLoading(true);
         setSourceError(null);
 
-        const response = await fetch(`/api/anime/watch/${episodeId}`);
+        // No explicit choice yet: fall back to the preferred server for this
+        // anime (stored when the user last picked one)
+        let effectiveServer = server;
+        if (effectiveServer === null) {
+          const prefs = ls.get<Record<string, string>>(PREFERRED_SERVER_KEY);
+          effectiveServer = prefs?.[animeId] ?? null;
+        }
+
+        const url = effectiveServer
+          ? `/api/anime/watch/${episodeId}?server=${encodeURIComponent(effectiveServer)}`
+          : `/api/anime/watch/${episodeId}`;
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error("Failed to fetch episode source");
         }
 
         const data = await response.json();
+        if (cancelled) return;
+
+        setAvailableServers(data.servers ?? []);
+        // First load with a stored preference that isn't the default server:
+        // pin it so the source refetches from it
+        if (
+          server === null &&
+          effectiveServer &&
+          data.servers?.length > 1 &&
+          data.servers[0] !== effectiveServer &&
+          data.servers.includes(effectiveServer)
+        ) {
+          setServer(effectiveServer);
+          return;
+        }
         setSource(data);
       } catch (error) {
         console.error("Error fetching episode:", error);
-        setSourceError(
-          error instanceof Error ? error.message : "Failed to load episode"
-        );
+        if (!cancelled) {
+          setSourceError(
+            error instanceof Error ? error.message : "Failed to load episode"
+          );
+        }
       } finally {
-        setSourceLoading(false);
+        if (!cancelled) setSourceLoading(false);
       }
     };
 
     fetchEpisodeSource();
-  }, [episodeId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [episodeId, server, animeId]);
+
+  const handleServerSelect = (name: string) => {
+    setServer(name);
+    const prefs = ls.get<Record<string, string>>(PREFERRED_SERVER_KEY) ?? {};
+    ls.set(PREFERRED_SERVER_KEY, { ...prefs, [animeId]: name });
+  };
 
   // Fetch anime info
   useEffect(() => {
@@ -124,6 +174,33 @@ export default function WatchPage() {
                 animeId={animeId}
               />
             ) : null}
+            {availableServers.length > 1 && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={sourceLoading}>
+                    Server: {server ?? availableServers[0]}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-fit" align="end">
+                  <div className="flex flex-col gap-1">
+                    {availableServers.map((name) => (
+                      <Button
+                        key={name}
+                        variant={
+                          (server ?? availableServers[0]) === name
+                            ? "default"
+                            : "ghost"
+                        }
+                        size="sm"
+                        onClick={() => handleServerSelect(name)}
+                      >
+                        {name}
+                      </Button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -131,6 +208,7 @@ export default function WatchPage() {
             <Skeleton className="aspect-video" />
           ) : source ? (
             <VideoPlayer
+              key={server ?? availableServers[0]}
               source={source}
               onError={setSourceError}
               animeTitle={animeInfo?.title || "Loading..."}

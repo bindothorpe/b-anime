@@ -7,6 +7,13 @@ export interface HlsError {
   details: ErrorDetails;
 }
 
+export interface SubtitleTrack {
+  lang: string;
+  label: string;
+  default?: boolean;
+  src: string;
+}
+
 export interface EpisodeSource {
   headers: { [key: string]: string };
   sources: Array<{
@@ -15,6 +22,7 @@ export interface EpisodeSource {
     isM3U8: boolean;
   }>;
   download: string;
+  subtitles?: SubtitleTrack[];
 }
 
 export interface AnimeInfo {

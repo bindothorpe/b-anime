@@ -1,19 +1,16 @@
 // app/api/anime/[query]/route.ts
-import { ANIME } from '@consumet/extensions';
+import { searchAnime } from '@/lib/hianime';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ query: string }> }
 ) {
   const { searchParams } = new URL(request.url);
-  const query = (await params).query
+  const query = (await params).query;
   const page = Number(searchParams.get('page')) || 1;
-  const decodedQuery = decodeURIComponent(query);
-  
-  const gogoanime = new ANIME.Gogoanime();
-  
+
   try {
-    const data = await gogoanime.search(decodedQuery, page);
+    const data = await searchAnime(decodeURIComponent(query), page);
     return Response.json(data);
   } catch (error) {
     console.error('Error fetching anime:', error);

@@ -1,52 +1,73 @@
 // app/api/anime/watch/[episodeId]/route.ts
-import { ANIME } from '@consumet/extensions';
-import { StreamingServers } from '@consumet/extensions/dist/models';
+import { getEpisodeList, getEpisodeServers, getEpisodeSources } from '@/lib/hianime';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ episodeId: string }> }
 ) {
   try {
-    // Extract the episode ID from the path
-    const episodeId = (await params).episodeId;
-    
-    // Parse server from query params (optional)
+    // Input format: {slug}-episode-{number} (from formatEpisodeId)
+    const episodeId = decodeURIComponent(
+      (await params).episodeId.split('/').pop() || ''
+    );
+
+    // Parse server from query params (optional, e.g. HD-1)
     const { searchParams } = new URL(request.url);
-    const server = searchParams.get('server') as StreamingServers || StreamingServers.GogoCDN;
+    const server = searchParams.get('server') ?? undefined;
 
-    console.log('Fetching episode:', episodeId, 'from server:', server); // Debug log
-
-    const gogoanime = new ANIME.Gogoanime();
-    
-    // The episodeId needs to be formatted properly for the API
-    // Format: anime-name-episode-number
-    // Example: one-piece-episode-1000
-    
-    // Remove any additional path segments and clean the ID
-    const cleanEpisodeId = episodeId
-      .split('/').pop() // Get last segment
-      ?.replace(/^\/+|\/+$/g, ''); // Remove leading/trailing slashes
-    
-    if (!cleanEpisodeId) {
+    const sepIndex = episodeId.lastIndexOf('-episode-');
+    if (sepIndex === -1) throw new Error('Invalid episode ID format');
+    const slug = episodeId.slice(0, sepIndex);
+    const episodeNumber = Number(episodeId.slice(sepIndex + '-episode-'.length));
+    if (!Number.isFinite(episodeNumber) || episodeNumber < 1) {
       throw new Error('Invalid episode ID format');
     }
 
-    console.log('Cleaned episode ID:', cleanEpisodeId); // Debug log
+    // hianime slugs always end with the numeric anime id
+    const animeId = slug.match(/-(\d+)$/)?.[1];
+    if (!animeId) throw new Error('Could not resolve anime id from slug');
 
-    const data = await gogoanime.fetchEpisodeSources(cleanEpisodeId, server);
+    const episodes = await getEpisodeList(animeId);
+    const episode =
+      episodes.find((e) => e.number === episodeNumber) ??
+      episodes[episodes.length - 1];
+    if (!episode) throw new Error('Episode not found');
 
-    // Map sources to include proxy
-    const sources = data.sources.map(source => ({
-      ...source,
-      url: source.url.startsWith('http') 
-        ? `/api/proxy?url=${encodeURIComponent(source.url)}&type=m3u8`
-        : source.url
+    const servers = await getEpisodeServers(episode.id);
+    const data = await getEpisodeSources(episode.id, server, servers);
+
+    // Non-zokoanime CDNs (e.g. megaplay.buzz streams) need their own Referer —
+    // pass it to the proxy via `ref`; zokoanime keeps the proxy's default
+    const referer = data.headers?.Referer;
+    const refSuffix =
+      referer && new URL(referer).hostname !== 'zokoanime.video'
+        ? `&ref=${encodeURIComponent(referer)}`
+        : '';
+
+    const sources = [
+      {
+        url: data.url.startsWith('http')
+          ? `/api/proxy?url=${encodeURIComponent(data.url)}&type=m3u8${refSuffix}`
+          : data.url,
+        quality: data.quality,
+        isM3U8: data.isM3U8,
+      },
+    ];
+
+    // Subtitle tracks: proxy VTTs so the browser can fetch them cross-origin
+    const subtitles = (data.subtitles ?? []).map((sub) => ({
+      ...sub,
+      src: sub.src.startsWith('http')
+        ? `/api/proxy?url=${encodeURIComponent(sub.src)}&type=ts${refSuffix}`
+        : sub.src,
     }));
 
     return Response.json({
-      headers: data.headers,
+      headers: data.headers ?? {},
       sources,
-      download: data.download
+      download: data.download ?? '',
+      subtitles,
+      servers: servers.map((s) => s.name),
     });
   } catch (error) {
     console.error('Error in watch route:', error);

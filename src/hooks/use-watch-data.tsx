@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as ls from "local-storage";
+import * as ls from "../lib/storage";
 import { WatchData } from "../types/watch-data";
 
 const STORAGE_KEY = "anime_watch_data";

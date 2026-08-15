@@ -1,15 +1,42 @@
 import { useEffect, useState } from "react";
 import { WatchData } from "@/types/watch-data";
-import * as ls from "local-storage";
+import * as ls from "../../../lib/storage";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { ContinueWatchingCard } from "./continue-watching-card";
-import AnimeResult from "@/types/anime-result";
 import { useWatchData } from "@/hooks/use-watch-data";
 import ContinueWatchingResult from "@/types/continue-watching-result";
 import ContinueWatchingCardSkeleton from "./continue-watching-card-skeleton";
 
 const STORAGE_KEY = "anime_watch_data";
 const MAX_ITEMS = 9;
+
+/** Resolve anime details by id: info route first (hianime slug), then search
+ *  by base name for legacy gogoanime-era slugs. */
+async function resolveDetails(
+  animeId: string,
+): Promise<{ title: string; image: string } | null> {
+  try {
+    const infoResponse = await fetch(`/api/anime/info/${animeId}`);
+    if (infoResponse.ok) {
+      const info = await infoResponse.json();
+      if (info?.title) return { title: info.title, image: info.image ?? "" };
+    }
+
+    const baseId = animeId.replace(/-\d+$/, "");
+    const searchResponse = await fetch(`/api/anime/${baseId}`);
+    if (searchResponse.ok) {
+      const searchJson = await searchResponse.json();
+      const result =
+        searchJson.results?.find((r: { id: string }) => r.id === animeId) ??
+        searchJson.results?.[0];
+      if (result?.title)
+        return { title: result.title, image: result.image ?? "" };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 export function ContinueWatchingSection() {
   const [results, setResults] = useState<ContinueWatchingResult[]>([]);
@@ -48,17 +75,14 @@ export function ContinueWatchingSection() {
 
             // Fetch anime details
             try {
-              const response = await fetch(`/api/anime/${anime.id}`);
-              const responseJson = await response.json();
-              const animeDetails = responseJson.results.filter(
-                (animeResult: AnimeResult) => animeResult.id === anime.id
-              )[0];
+              const animeDetails = await resolveDetails(anime.id);
+              if (!animeDetails) return null;
 
               return {
                 animeId: anime.id,
                 episodeId: latestEpisode.id,
                 episodeNumber: parseInt(
-                  latestEpisode.id.split("-").pop() || "1"
+                  latestEpisode.id.split("-").pop() || "1",
                 ),
                 title: animeDetails.title,
                 image: animeDetails.image,
@@ -69,7 +93,7 @@ export function ContinueWatchingSection() {
               console.error("Error fetching anime details:", error);
               return null;
             }
-          })
+          }),
         );
 
         // Filter out null values and sort by updatedAt
@@ -97,7 +121,7 @@ export function ContinueWatchingSection() {
     return (
       <>
         <h1 className="text-xl md:text-2xl font-bold mb-2 pl-4">
-          Continue watching
+          Continue where you left off!
         </h1>
         <div className="mb-8 md:mb-12">
           <ScrollArea className="w-full whitespace-nowrap rounded-md">
@@ -125,7 +149,7 @@ export function ContinueWatchingSection() {
   return (
     <>
       <h1 className="text-xl md:text-2xl font-bold mb-2 pl-4">
-        Continue watching
+        Continue where you left off!
       </h1>
       <div className="mb-8 md:mb-12">
         <ScrollArea className="w-full whitespace-nowrap rounded-md">

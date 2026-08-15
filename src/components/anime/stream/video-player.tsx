@@ -4,7 +4,7 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 import Hls, { Events, ErrorTypes } from "hls.js";
 import { HlsError, EpisodeSource } from "@/types/anime";
-import * as ls from "local-storage";
+import * as ls from "../../../lib/storage";
 import VideoControls from "./video-controls";
 
 interface VideoPlayerProps {
@@ -251,7 +251,18 @@ export function VideoPlayer({
             e.preventDefault();
           }
         }}
-      />
+      >
+        {source.subtitles?.map((sub) => (
+          <track
+            key={sub.src}
+            kind="subtitles"
+            srcLang={sub.lang}
+            label={sub.label}
+            src={sub.src}
+            default={sub.default}
+          />
+        ))}
+      </video>
 
       <VideoControls
         videoRef={videoRef}

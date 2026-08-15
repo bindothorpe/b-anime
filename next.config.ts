@@ -17,7 +17,7 @@ const nextConfig = {
     largePageDataBytes: 128 * 100000,
   },
   images: {
-    domains: ['gogocdn.net'],
+    domains: ['hianime.at', 'cdn.myanimelist.net'],
   },
   poweredByHeader: false,
 }

@@ -5,11 +5,35 @@ import { useEffect, useState } from "react";
 import ContinueWatchingCardSkeleton from "./continue-watching-card-skeleton";
 import { ContinueWatchingCard } from "./continue-watching-card";
 import { WatchData } from "@/types/watch-data";
-import * as ls from "local-storage";
-import AnimeResult from "@/types/anime-result";
+import * as ls from "../../../lib/storage";
 import Link from "next/link";
 
 const STORAGE_KEY = "anime_watch_data";
+
+/** Resolve anime details by id: info route first (hianime slug), then search
+ *  by base name for legacy gogoanime-era slugs. */
+async function resolveDetails(animeId: string): Promise<{ title: string; image: string } | null> {
+  try {
+    const infoResponse = await fetch(`/api/anime/info/${animeId}`);
+    if (infoResponse.ok) {
+      const info = await infoResponse.json();
+      if (info?.title) return { title: info.title, image: info.image ?? "" };
+    }
+
+    const baseId = animeId.replace(/-\d+$/, "");
+    const searchResponse = await fetch(`/api/anime/${baseId}`);
+    if (searchResponse.ok) {
+      const searchJson = await searchResponse.json();
+      const result =
+        searchJson.results?.find((r: { id: string }) => r.id === animeId) ??
+        searchJson.results?.[0];
+      if (result?.title) return { title: result.title, image: result.image ?? "" };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 export default function ContinueWatchingGrid() {
   const [results, setResults] = useState<ContinueWatchingResult[]>([]);
@@ -48,11 +72,8 @@ export default function ContinueWatchingGrid() {
 
             // Fetch anime details
             try {
-              const response = await fetch(`/api/anime/${anime.id}`);
-              const responseJson = await response.json();
-              const animeDetails = responseJson.results.filter(
-                (animeResult: AnimeResult) => animeResult.id === anime.id
-              )[0];
+              const animeDetails = await resolveDetails(anime.id);
+              if (!animeDetails) return null;
 
               return {
                 animeId: anime.id,
